@@ -1,13 +1,7 @@
-import streamlit as st
-from agent import BedrockAgent
 import boto3
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-import io
-from datetime import datetime
-from config import S3_CONFIG
+import streamlit as st
+
+from agent import BedrockAgent
 from utils import save_game
 
 # Set page config without theme parameter
