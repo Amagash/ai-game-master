@@ -36,7 +36,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 3. Install dependencies:
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
 ## Configuration
@@ -49,7 +49,31 @@ BEDROCK_AGENT_ALIAS_ID=your-agent-alias-id
 S3_BUCKET_NAME=your-bucket-name
 ```
 
-2. Ensure your AWS credentials are properly configured.
+2. Configure your AWS credentials using one of these methods:
+
+   a. Using AWS CLI (recommended):
+   ```bash
+   aws configure
+   ```
+   Then enter your:
+   - AWS Access Key ID
+   - AWS Secret Access Key
+   - Default region name
+   - Default output format (json)
+
+   b. Or manually create/edit `~/.aws/credentials`:
+   ```ini
+   [default]
+   aws_access_key_id = YOUR_ACCESS_KEY
+   aws_secret_access_key = YOUR_SECRET_KEY
+   ```
+
+   And `~/.aws/config`:
+   ```ini
+   [default]
+   region = your-region
+   output = json
+   ```
 
 ## Usage
 
