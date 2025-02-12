@@ -9,6 +9,7 @@ setup(
         'streamlit',
         'boto3',
         'python-dotenv',
-        'reportlab'
+        'reportlab',
+        'Pillow',
     ]
 ) 

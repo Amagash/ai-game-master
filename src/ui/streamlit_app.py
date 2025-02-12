@@ -1,6 +1,7 @@
 import streamlit as st
 from src.agents.bedrock_agent import BedrockAgent
 from src.services.storage_service import StorageService
+from src.services.image_service import ImageService
 from src.config.prompts import LAUNCH_PROMPT
 
 class GameMasterUI:
@@ -15,6 +16,8 @@ class GameMasterUI:
             st.session_state.agent = BedrockAgent()
         if 'storage' not in st.session_state:
             st.session_state.storage = StorageService()
+        if 'image_service' not in st.session_state:
+            st.session_state.image_service = ImageService()
         if 'name' not in st.session_state:
             st.session_state.name = None
     
@@ -34,22 +37,39 @@ class GameMasterUI:
             st.session_state.name = name_input
             st.session_state._last_name_input = name_input
             launch_prompt = LAUNCH_PROMPT.format(player_name=st.session_state.name)
-            response = st.session_state.agent.get_response(launch_prompt)
+            with st.spinner("Starting game..."):
+                response = st.session_state.agent.get_response(launch_prompt)
             if response:
                 st.session_state.messages.append({"role": "assistant", "content": response})
             st.rerun()
 
+    def _generate_and_display_image(self, text):
+        """Generate and display an image based on the text"""
+        with st.spinner("Generating image..."):
+            image = st.session_state.image_service.generate_image(text)
+            if image:
+                st.image(image, use_container_width=True)
+
+    def _display_message(self, message):
+        """Display a single message and its image if it's from the assistant"""
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+            if message["role"] == "assistant":
+                self._generate_and_display_image(message["content"])
+
+    def _display_chat_history(self):
+        """Display all messages with their images"""
+        for message in st.session_state.messages:
+            self._display_message(message)
+
     def _handle_chat(self):
         if prompt := st.chat_input("What would you like to ask?"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            response = st.session_state.agent.get_response(prompt)
+            with st.spinner("Thinking..."):
+                response = st.session_state.agent.get_response(prompt)
             if response:
                 st.session_state.messages.append({"role": "assistant", "content": response})
-
-    def _display_chat_history(self):
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+                self._display_message({"role": "assistant", "content": response})
 
     def _setup_sidebar(self):
         if st.session_state.name is not None:
