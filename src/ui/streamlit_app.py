@@ -1,6 +1,7 @@
 import streamlit as st
 from src.agents.bedrock_agent import BedrockAgent
 from src.services.storage_service import StorageService
+from src.config.prompts import LAUNCH_PROMPT
 
 class GameMasterUI:
     def __init__(self):
@@ -28,16 +29,15 @@ class GameMasterUI:
         st.title("Game Master")
     
     def _handle_name_input(self):
-        with st.form("name_form"):
-            name_input = st.text_input("What is your name adventurer?")
-            submit_button = st.form_submit_button("Start")
-            if submit_button and name_input:
-                st.session_state.name = name_input
-                launch_prompt = f"""The player's name is {st.session_state.name}. Describe the surroundings of the player and create an atmosphere that the player can bounce off of."""
-                response = st.session_state.agent.get_response(launch_prompt)
-                if response:
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                st.rerun()
+        name_input = st.text_input("What is your name adventurer?", key="name_input")
+        if name_input and st.session_state.name_input != st.session_state.get('_last_name_input'):
+            st.session_state.name = name_input
+            st.session_state._last_name_input = name_input
+            launch_prompt = LAUNCH_PROMPT.format(player_name=st.session_state.name)
+            response = st.session_state.agent.get_response(launch_prompt)
+            if response:
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun()
 
     def _handle_chat(self):
         if prompt := st.chat_input("What would you like to ask?"):
@@ -60,9 +60,9 @@ class GameMasterUI:
         if not st.session_state.messages:
             st.warning("No conversation to save!")
             return
-            
+        
         success, result = st.session_state.storage.save_game_session(
-            st.session_state.messages, 
+            st.session_state.messages,
             st.session_state.name
         )
         
