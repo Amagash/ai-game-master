@@ -53,9 +53,15 @@ class GameMasterUI:
     def _display_message(self, message):
         """Display a single message and its image if it's from the assistant"""
         with st.chat_message(message["role"]):
-            st.write(message["content"])
             if message["role"] == "assistant":
-                self._generate_and_display_image(message["content"])
+                # Create two columns
+                col1, col2 = st.columns([3, 2])  # 3:2 ratio for text:image
+                with col2:
+                    self._generate_and_display_image(message["content"])
+                with col1:
+                    st.write(message["content"])
+            else:
+                st.write(message["content"])
 
     def _display_chat_history(self):
         """Display all messages with their images"""
@@ -64,12 +70,19 @@ class GameMasterUI:
 
     def _handle_chat(self):
         if prompt := st.chat_input("What would you like to ask?"):
+            # Add user message to history
             st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display chat history up to this point
+            self._display_chat_history()
+            
+            # Get and display assistant response
             with st.spinner("Thinking..."):
                 response = st.session_state.agent.get_response(prompt)
             if response:
+                # Add assistant response to history
                 st.session_state.messages.append({"role": "assistant", "content": response})
-                self._display_message({"role": "assistant", "content": response})
+                st.rerun()  # Rerun to update the chat history cleanly
 
     def _setup_sidebar(self):
         if st.session_state.name is not None:
