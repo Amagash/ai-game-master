@@ -1,8 +1,8 @@
 import boto3
 import streamlit as st
 
-from agent import BedrockAgent
-from utils import save_game
+from to_erase.agent import BedrockAgent
+from to_erase.utils import save_game
 
 # Set page config without theme parameter
 st.set_page_config(page_title="Game Master", page_icon="🎲", layout="wide", initial_sidebar_state="auto", menu_items=None)
