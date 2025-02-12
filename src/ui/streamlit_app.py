@@ -1,6 +1,5 @@
 import streamlit as st
 from src.agents.bedrock_agent import BedrockAgent
-from src.services.pdf_service import PDFService
 from src.services.storage_service import StorageService
 
 class GameMasterUI:
@@ -23,7 +22,8 @@ class GameMasterUI:
             page_title="Game Master",
             page_icon="🎲",
             layout="wide",
-            initial_sidebar_state="auto"
+            initial_sidebar_state="auto",
+            menu_items=None
         )
         st.title("Game Master")
     
@@ -61,9 +61,8 @@ class GameMasterUI:
             st.warning("No conversation to save!")
             return
             
-        pdf_buffer = PDFService.create_chat_pdf(st.session_state.messages)
         success, result = st.session_state.storage.save_game_session(
-            pdf_buffer, 
+            st.session_state.messages, 
             st.session_state.name
         )
         
