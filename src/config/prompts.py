@@ -1,5 +1,7 @@
 # Game prompts
-LAUNCH_PROMPT = """The player's name is {player_name} and you can welcome them to the game.Describe the surroundings of the player and create an atmosphere that the player can bounce off of."""
+LAUNCH_PROMPT = """The player's name is {player_name} and you can welcome them to the game. 
+The player is a {player_race} {player_class}.
+Describe the surroundings of the player and create an atmosphere that the player can bounce off of."""
 
 # Image generation prompts
 class ImagePrompts:
