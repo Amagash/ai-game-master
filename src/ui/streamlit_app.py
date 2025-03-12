@@ -1,9 +1,11 @@
-import streamlit as st
+# Standard library imports
 from datetime import datetime
-import time
 import uuid
 
-# Must be the first Streamlit command
+# Third-party imports
+import streamlit as st
+
+# Set page configuration
 st.set_page_config(
     page_title="Game Master",
     page_icon="🎲",
@@ -12,11 +14,12 @@ st.set_page_config(
     menu_items=None
 )
 
+# Local application imports
 from src.agents.bedrock_agent import BedrockAgent
 from src.services.storage_service import StorageService
 from src.services.image_service import ImageService
-from src.config.prompts import LAUNCH_PROMPT
 from src.services.character_service import CharacterService
+from src.config.prompts import LAUNCH_PROMPT
 
 class GameMasterUI:
     def __init__(self):
@@ -156,25 +159,7 @@ class GameMasterUI:
             
             st.button("Save Game", on_click=self.save_game)
 
-        # Show loading state for game initialization
-        if not st.session_state.launch_prompt_sent:
-            st.markdown("## Preparing Your Adventure")
-            with st.spinner("The Game Master is preparing your adventure..."):
-                character = st.session_state.current_character
-                launch_prompt = LAUNCH_PROMPT.format(
-                    player_name=character['character_name'],
-                    player_race=character['race'],
-                    player_class=character['class']
-                )
-                
-                response = st.session_state.agent.get_response(launch_prompt)
-                if response:
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                    st.session_state.launch_prompt_sent = True
-                    st.rerun()
-                return  # Don't show the rest of the UI while loading
-
-        # Main game area (only shown after launch prompt is sent)
+        # Main game area
         self._display_chat_history()
         
         if prompt := st.chat_input("What would you like to ask?", max_chars=1000):
@@ -192,7 +177,29 @@ class GameMasterUI:
         if st.session_state.current_page == 'character_creation':
             self._display_character_creation_page()
         else:
-            self._display_game_page()
+            # Clear any previous UI by using an empty container
+            main_container = st.empty()
+            
+            with main_container.container():
+                if not st.session_state.launch_prompt_sent:
+                    # Show only loading state
+                    st.title("Game Master")
+                    st.markdown("## Preparing Your Adventure")
+                    with st.spinner("The Game Master is preparing your adventure..."):
+                        character = st.session_state.current_character
+                        launch_prompt = LAUNCH_PROMPT.format(
+                            player_name=character['character_name'],
+                            player_race=character['race'],
+                            player_class=character['class']
+                        )
+                        
+                        response = st.session_state.agent.get_response(launch_prompt)
+                        if response:
+                            st.session_state.messages.append({"role": "assistant", "content": response})
+                            st.session_state.launch_prompt_sent = True
+                            st.rerun()
+                else:
+                    self._display_game_page()
 
     def _generate_and_display_image(self, text):
         """Generate and display an image based on the text"""
