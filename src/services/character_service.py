@@ -48,6 +48,7 @@ class CharacterService:
                     "name": character_name,
                     "class": specs.get('class', ''),
                     "race": specs.get('race', ''),
+                    "gender": specs.get('gender', ''),  # Add gender field
                     "level": 1,  # Starting at level 1
                     "experience": 0,  # Starting with 0 XP
                     "stats": {
