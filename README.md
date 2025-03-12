@@ -1,16 +1,20 @@
 # AI Game Master
 
-An interactive text adventure game powered by AWS Bedrock and Streamlit.
+An interactive text adventure game powered by [AWS Bedrock](https://aws.amazon.com/bedrock/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el) and Streamlit.
 
 ## Description
 
-AI Game Master is an interactive application that uses AI to create a unique role-playing experience. The application uses AWS Bedrock to generate contextual responses and create an immersive atmosphere for players.
+AI Game Master is an interactive application that uses AI to create a unique role-playing experience. The application uses [AWS Bedrock](https://aws.amazon.com/bedrock/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el) to generate contextual responses and create an immersive atmosphere for players. It features character creation, dynamic storytelling, and AI-generated images that match the narrative.
 
 ## Features
 
-- Interactive chat interface
-- Contextual response generation via AWS Bedrock
+- Interactive chat interface with AI game master
+- Comprehensive character creation system with race, class, gender, and stats
+- Contextual response generation via [AWS Bedrock](https://aws.amazon.com/bedrock/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el)
+- AI-generated images using [Amazon Nova Canvas](https://aws.amazon.com/ai/generative-ai/nova/creative/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el)
+- Intelligent image prompting that maintains character consistency
 - Game session saving to PDF in S3
+- Character data storage in [DynamoDB](https://aws.amazon.com/pm/dynamodb/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el)
 - Intuitive user interface with Streamlit
 - Custom dark theme
 
@@ -18,7 +22,10 @@ AI Game Master is an interactive application that uses AI to create a unique rol
 
 - Python 3.8+
 - AWS account with Bedrock access
-- Configured S3 bucket
+  - Access to Claude models for text generation
+  - Access to Nova Canvas for image generation
+- Configured S3 bucket for game session storage
+- DynamoDB table for character data
 
 ## Installation
 
@@ -47,6 +54,7 @@ AWS_REGION=your-region
 BEDROCK_AGENT_ID=your-agent-id
 BEDROCK_AGENT_ALIAS_ID=your-agent-alias-id
 S3_BUCKET_NAME=your-bucket-name
+DYNAMODB_TABLE_NAME=your-table-name
 ```
 
 2. Configure your AWS credentials using one of these methods:
@@ -75,6 +83,14 @@ S3_BUCKET_NAME=your-bucket-name
    output = json
    ```
 
+## AWS Bedrock Model Access
+
+Ensure your AWS account has access to the following models:
+- Claude 3 Sonnet (for text generation and summarization)
+- Amazon Nova Canvas (for image generation)
+
+You can enable these models in the AWS Bedrock console under "Model access".
+
 ## Usage
 
 Launch the application with:
@@ -83,6 +99,20 @@ streamlit run app.py
 ```
 
 The application will be accessible at: http://localhost:8501
+
+### Character Creation
+
+1. Enter your character's name
+2. Select your character's race, class, and gender
+3. Adjust ability scores as desired
+4. Click "Start Adventure" to begin your journey
+
+### Game Play
+
+- Use the chat interface to interact with the AI Game Master
+- Images will be generated based on the narrative
+- Character information is displayed in the sidebar
+- Save your game session using the "Save Game" button
 
 ## Project Structure
 
@@ -96,8 +126,8 @@ ai-game-master/
 │   └── config.toml       # Streamlit configuration
 └── src/
     ├── agents/           # Bedrock interaction logic
-    ├── services/         # Services
-    ├── config/           # Configuration
+    ├── services/         # Services (image, character, storage)
+    ├── config/           # Configuration and prompts
     └── ui/               # Streamlit user interface
 ```
 
