@@ -24,7 +24,7 @@ from src.config.prompts import LAUNCH_PROMPT
 class GameMasterUI:
     def __init__(self):
         self._initialize_session_state()
-        self._setup_page()
+        # We'll handle page setup in the run method
 
     def _setup_page(self):
         st.title("Game Master")
@@ -50,6 +50,7 @@ class GameMasterUI:
             st.session_state.launch_prompt_sent = False
 
     def _display_character_creation_page(self):
+        st.title("Game Master")
         st.header("Create Your Character")
         
         # Player name input
@@ -57,8 +58,8 @@ class GameMasterUI:
         if name_input:
             st.session_state.name = name_input
             
-        # Race and Class selection
-        col1, col2 = st.columns(2)
+        # Race, Class, and Gender selection
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             race = st.selectbox(
@@ -96,6 +97,18 @@ class GameMasterUI:
                 ],
                 key="class"
             )
+            
+        with col3:
+            gender = st.selectbox(
+                "What is your gender?",
+                [
+                    "Male",
+                    "Female",
+                    "Non-binary",
+                    "Other"
+                ],
+                key="gender"
+            )
         
         st.divider()  # Add a visual separator
         
@@ -119,6 +132,7 @@ class GameMasterUI:
             'character_name': name_input,
             'race': race,
             'class': character_class,
+            'gender': gender,
             'Intelligence': intelligence,
             'Strength': strength,
             'Dexterity': dexterity,
@@ -148,11 +162,12 @@ class GameMasterUI:
         with st.sidebar:
             st.title(st.session_state.current_character['character_name'])
             st.write(f"**{st.session_state.current_character['race']} {st.session_state.current_character['class']}**")
+            st.write(f"**Gender:** {st.session_state.current_character['gender']}")
             
             st.divider()
             
             for stat, value in st.session_state.current_character.items():
-                if stat not in ['character_name', 'race', 'class']:
+                if stat not in ['character_name', 'race', 'class', 'gender']:
                     modifier = (value - 10) // 2
                     modifier_text = f"+{modifier}" if modifier >= 0 else str(modifier)
                     st.write(f"{stat}: {value} ({modifier_text})")
@@ -174,23 +189,34 @@ class GameMasterUI:
                 st.rerun()
 
     def run(self):
+        # Use a placeholder for the entire UI to allow complete clearing
+        main_container = st.empty()
+        
         if st.session_state.current_page == 'character_creation':
-            self._display_character_creation_page()
-        else:
-            # Clear any previous UI by using an empty container
-            main_container = st.empty()
-            
+            # Display character creation page
             with main_container.container():
+                self._display_character_creation_page()
+        else:
+            # Game page - first clear any previous content
+            main_container.empty()
+            
+            # Create a new container for game content
+            with st.container():
                 if not st.session_state.launch_prompt_sent:
-                    # Show only loading state
+                    # Show loading state
                     st.title("Game Master")
                     st.markdown("## Preparing Your Adventure")
                     with st.spinner("The Game Master is preparing your adventure..."):
                         character = st.session_state.current_character
+                        
+                        # Set character info in the image service for consistent image generation
+                        st.session_state.image_service.set_character_info(character)
+                        
                         launch_prompt = LAUNCH_PROMPT.format(
                             player_name=character['character_name'],
                             player_race=character['race'],
-                            player_class=character['class']
+                            player_class=character['class'],
+                            player_gender=character['gender']
                         )
                         
                         response = st.session_state.agent.get_response(launch_prompt)
@@ -199,6 +225,8 @@ class GameMasterUI:
                             st.session_state.launch_prompt_sent = True
                             st.rerun()
                 else:
+                    # Game is ready, display game page
+                    st.title("Game Master")
                     self._display_game_page()
 
     def _generate_and_display_image(self, text):

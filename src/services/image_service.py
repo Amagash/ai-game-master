@@ -19,19 +19,42 @@ class ImageService:
             config=Config(read_timeout=300)
         )
         self.model_id = 'amazon.nova-canvas-v1:0'  # Using Amazon Nova Canvas
-        self.llm_model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'  # Claude for summarization
+        self.llm_model_id = 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'  # Claude 3.7 Sonnet for summarization
         self.logger = logging.getLogger(__name__)
+        # Store character information
+        self.character_info = None
+    
+    def set_character_info(self, character_info):
+        """Set character information for image generation context"""
+        self.character_info = character_info
+        self.logger.info(f"Character info set: {character_info}")
     
     def _summarize_text(self, text, max_length=500):
         """Use Claude to generate a concise summary of the text for image generation"""
         try:
             if len(text) <= max_length:
                 return text
+            
+            # Build character context if available
+            character_context = ""
+            if self.character_info:
+                character_context = f"""
+                Important character information:
+                - Character: {self.character_info.get('character_name', 'Unknown')}
+                - Gender: {self.character_info.get('gender', 'Unknown')}
+                - Race: {self.character_info.get('race', 'Unknown')}
+                - Class: {self.character_info.get('class', 'Unknown')}
+                
+                If the text describes the player character or refers to them, ensure the image description 
+                maintains consistency with their gender, race, and class.
+                """
                 
             prompt = f"""
             I need a concise, vivid description for image generation based on the following text. 
             Focus on the visual elements and key details that would make a compelling image.
             Keep your response under 500 characters.
+            
+            {character_context}
             
             Text to summarize:
             {text}
