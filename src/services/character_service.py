@@ -9,19 +9,62 @@ class CharacterService:
     def save_character(self, character_id, specs):
         """Save a character's specifications to DynamoDB"""
         try:
+            # Default inventory for new characters
+            default_inventory = [
+                {"item_name": "Shortsword", "quantity": 1},
+                {"item_name": "Shortbow", "quantity": 1},
+                {"item_name": "Arrows", "quantity": 20},
+                {"item_name": "Leather Armor", "quantity": 1},
+                {"item_name": "Torch", "quantity": 2},
+                {"item_name": "Flint & Tinder", "quantity": 1},
+                {"item_name": "Rations", "quantity": 5},
+                {"item_name": "Waterskin", "quantity": 1},
+                {"item_name": "Map or Blank Parchment", "quantity": 1},
+                {"item_name": "Quill & Ink", "quantity": 1},
+                {"item_name": "Health Potion", "quantity": 1},
+                {"item_name": "Gold Pieces", "quantity": 10}
+            ]
+
+            # Calculate max HP based on class and constitution
+            base_hp = {
+                "Barbarian": 12, "Fighter": 10, "Paladin": 10, "Ranger": 10,
+                "Bard": 8, "Cleric": 8, "Druid": 8, "Monk": 8, "Rogue": 8, "Warlock": 8,
+                "Sorcerer": 6, "Wizard": 6
+            }.get(specs.get('class'), 8)
+            
+            constitution_modifier = (specs.get('Constitution', 10) - 10) // 2
+            max_hp = base_hp + constitution_modifier
+
+            # Ensure character_name is included as a key
+            character_name = specs.get('character_name', '')
+            if not character_name:
+                raise ValueError("Character name is required")
+
             self.table.put_item(
                 Item={
-                    'character_id': character_id,
-                    'character_name': specs.get('character_name', ''),
-                    'race': specs.get('race', ''),
-                    'class': specs.get('class', ''),
-                    'intelligence': specs.get('Intelligence', 0),
-                    'strength': specs.get('Strength', 0),
-                    'dexterity': specs.get('Dexterity', 0),
-                    'constitution': specs.get('Constitution', 0),
-                    'wisdom': specs.get('Wisdom', 0),
-                    'charisma': specs.get('Charisma', 0),
-                    # Add more attributes as needed
+                    "character_id": character_id,
+                    "character_name": character_name,  # Add this as a key
+                    "player_id": character_name,  # Using character_name as player_id for now
+                    "name": character_name,
+                    "class": specs.get('class', ''),
+                    "race": specs.get('race', ''),
+                    "level": 1,  # Starting at level 1
+                    "experience": 0,  # Starting with 0 XP
+                    "stats": {
+                        "strength": specs.get('Strength', 10),
+                        "dexterity": specs.get('Dexterity', 10),
+                        "constitution": specs.get('Constitution', 10),
+                        "intelligence": specs.get('Intelligence', 10),
+                        "wisdom": specs.get('Wisdom', 10),
+                        "charisma": specs.get('Charisma', 10)
+                    },
+                    "inventory": default_inventory,
+                    "current_status": {
+                        "hp": max_hp,
+                        "max_hp": max_hp,
+                        "condition": "Normal",
+                        "buffs": []
+                    }
                 }
             )
             return True
