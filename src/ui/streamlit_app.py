@@ -1,6 +1,8 @@
 # Standard library imports
 from datetime import datetime
 import uuid
+import re
+import time
 
 # Third-party imports
 import streamlit as st
@@ -19,16 +21,12 @@ from src.agents.bedrock_agent import BedrockAgent
 from src.services.storage_service import StorageService
 from src.services.image_service import ImageService
 from src.services.character_service import CharacterService
-from src.config.prompts import LAUNCH_PROMPT
+from src.config.prompts import LAUNCH_PROMPT, SUGGESTION_PROMPT
 
 class GameMasterUI:
     def __init__(self):
         self._initialize_session_state()
-        # We'll handle page setup in the run method
 
-    def _setup_page(self):
-        st.title("Game Master")
-        
     def _initialize_session_state(self):
         if 'messages' not in st.session_state:
             st.session_state.messages = []
@@ -48,9 +46,12 @@ class GameMasterUI:
             st.session_state.current_page = 'character_creation'
         if 'launch_prompt_sent' not in st.session_state:
             st.session_state.launch_prompt_sent = False
+        if 'suggestions' not in st.session_state:
+            st.session_state.suggestions = []
+        if 'last_message_had_suggestions' not in st.session_state:
+            st.session_state.last_message_had_suggestions = False
 
     def _display_character_creation_page(self):
-        st.title("Game Master")
         st.header("Create Your Character")
         
         # Player name input
@@ -153,7 +154,12 @@ class GameMasterUI:
                 st.session_state.character_created = True
                 st.session_state.current_character = specs
                 st.session_state.current_page = 'game'
-                st.rerun()  # This will immediately switch to the game page
+                
+                # Use a short delay to ensure the success message is seen
+                time.sleep(1)
+                
+                # Force a complete page refresh
+                st.rerun()
             else:
                 st.error("Failed to save character. Please try again.")
 
@@ -177,16 +183,69 @@ class GameMasterUI:
         # Main game area
         self._display_chat_history()
         
-        if prompt := st.chat_input("What would you like to ask?", max_chars=1000):
-            st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display suggestion buttons if available
+        if st.session_state.suggestions and len(st.session_state.suggestions) > 0:
+            st.write("**Suggested actions:**")
+            cols = st.columns(min(3, len(st.session_state.suggestions)))
+            for i, suggestion in enumerate(st.session_state.suggestions[:3]):  # Limit to 3 suggestions
+                with cols[i]:
+                    if st.button(suggestion, key=f"suggestion_{i}"):
+                        self._handle_user_input(suggestion)
+        
+        # Regular text input
+        if prompt := st.chat_input("What would you like to do?", max_chars=1000):
+            self._handle_user_input(prompt)
+
+    def _handle_user_input(self, prompt):
+        """Process user input and get AI response"""
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Clear suggestions after user input
+        st.session_state.suggestions = []
+        
+        # Get AI response
+        with st.spinner("Thinking..."):
+            response = st.session_state.agent.get_response(prompt)
             
-        # Handle new messages
-        if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-            with st.spinner("Thinking..."):
-                response = st.session_state.agent.get_response(prompt)
-            if response:
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.rerun()
+        if response:
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # Generate new suggestions after AI response
+            if not st.session_state.last_message_had_suggestions:
+                self._generate_suggestions(response)
+                st.session_state.last_message_had_suggestions = True
+            else:
+                st.session_state.last_message_had_suggestions = False
+                
+            st.rerun()
+
+    def _generate_suggestions(self, context):
+        """Generate action suggestions based on the current context"""
+        try:
+            character = st.session_state.current_character
+            suggestion_prompt = SUGGESTION_PROMPT.format(
+                player_name=character['character_name'],
+                player_race=character['race'],
+                player_class=character['class'],
+                player_gender=character['gender'],
+                context=context
+            )
+            
+            with st.spinner("Generating suggestions..."):
+                suggestions_text = st.session_state.agent.get_response(suggestion_prompt)
+                
+                # Extract suggestions using regex
+                suggestions = re.findall(r'\d+\.\s+(.*?)(?=\n\d+\.|\Z)', suggestions_text, re.DOTALL)
+                
+                # Clean up suggestions
+                suggestions = [s.strip() for s in suggestions if s.strip()]
+                
+                if suggestions:
+                    st.session_state.suggestions = suggestions[:3]  # Limit to 3 suggestions
+        except Exception as e:
+            print(f"Error generating suggestions: {str(e)}")
+            st.session_state.suggestions = []
 
     def run(self):
         # Use a placeholder for the entire UI to allow complete clearing
@@ -195,16 +254,19 @@ class GameMasterUI:
         if st.session_state.current_page == 'character_creation':
             # Display character creation page
             with main_container.container():
+                st.title("Game Master")  # Display title once at the top
                 self._display_character_creation_page()
         else:
-            # Game page - first clear any previous content
+            # Game page - first clear any previous content completely
             main_container.empty()
             
             # Create a new container for game content
-            with st.container():
+            game_container = st.container()
+            
+            with game_container:
                 if not st.session_state.launch_prompt_sent:
                     # Show loading state
-                    st.title("Game Master")
+                    st.title("Game Master")  # Display title once
                     st.markdown("## Preparing Your Adventure")
                     with st.spinner("The Game Master is preparing your adventure..."):
                         character = st.session_state.current_character
@@ -226,7 +288,7 @@ class GameMasterUI:
                             st.rerun()
                 else:
                     # Game is ready, display game page
-                    st.title("Game Master")
+                    st.title("Game Master")  # Display title once
                     self._display_game_page()
 
     def _generate_and_display_image(self, text):
