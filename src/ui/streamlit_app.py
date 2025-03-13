@@ -50,6 +50,8 @@ class GameMasterUI:
             st.session_state.suggestions = []
         if 'last_message_had_suggestions' not in st.session_state:
             st.session_state.last_message_had_suggestions = False
+        if 'generated_images' not in st.session_state:
+            st.session_state.generated_images = {}  # Store images by message index
 
     def _display_character_creation_page(self):
         st.header("Create Your Character")
@@ -183,17 +185,44 @@ class GameMasterUI:
         # Main game area
         self._display_chat_history()
         
-        # Display suggestion buttons if available
+        # Debug information about suggestions
+        print(f"Current suggestions in session state: {st.session_state.suggestions}")
+        
+        # Display suggestion buttons if available - make them more prominent
         if st.session_state.suggestions and len(st.session_state.suggestions) > 0:
-            st.write("**Suggested actions:**")
-            cols = st.columns(min(3, len(st.session_state.suggestions)))
-            for i, suggestion in enumerate(st.session_state.suggestions[:3]):  # Limit to 3 suggestions
-                with cols[i]:
-                    if st.button(suggestion, key=f"suggestion_{i}"):
-                        self._handle_user_input(suggestion)
+            
+            # Create a container with a light background for better visibility
+            suggestion_container = st.container()
+            with suggestion_container:
+                cols = st.columns(min(3, len(st.session_state.suggestions)))
+                for i, suggestion in enumerate(st.session_state.suggestions[:3]):  # Limit to 3 suggestions
+                    with cols[i]:
+                        if st.button(suggestion, key=f"suggestion_{i}", use_container_width=True):
+                            self._handle_user_input(suggestion)
+            
+            st.markdown("---")  # Add a separator
+        else:
+            # If no suggestions are available, show a message and default suggestions
+            st.warning("No specific suggestions available. Here are some general actions you can take:")
+            
+            default_suggestions = [
+                "Explore the area",
+                "Talk to someone nearby",
+                "Check your inventory"
+            ]
+            
+            suggestion_container = st.container()
+            with suggestion_container:
+                cols = st.columns(3)
+                for i, suggestion in enumerate(default_suggestions):
+                    with cols[i]:
+                        if st.button(suggestion, key=f"default_suggestion_{i}", use_container_width=True):
+                            self._handle_user_input(suggestion)
+            
+            st.markdown("---")  # Add a separator
         
         # Regular text input
-        if prompt := st.chat_input("What would you like to do?", max_chars=1000):
+        if prompt := st.chat_input("Or type what you would like to do...", max_chars=1000):
             self._handle_user_input(prompt)
 
     def _handle_user_input(self, prompt):
@@ -209,15 +238,20 @@ class GameMasterUI:
             response = st.session_state.agent.get_response(prompt)
             
         if response:
+            # Add the new message to the chat history
+            message_index = len(st.session_state.messages)
             st.session_state.messages.append({"role": "assistant", "content": response})
             
-            # Generate new suggestions after AI response
-            if not st.session_state.last_message_had_suggestions:
-                self._generate_suggestions(response)
-                st.session_state.last_message_had_suggestions = True
-            else:
-                st.session_state.last_message_had_suggestions = False
-                
+            # Generate image for the new message only
+            with st.spinner("Generating image for the new response..."):
+                image = st.session_state.image_service.generate_image(response)
+                if image:
+                    # Store the generated image in session state
+                    st.session_state.generated_images[message_index] = image
+            
+            # Always generate new suggestions after AI response
+            self._generate_suggestions(response)
+            
             st.rerun()
 
     def _generate_suggestions(self, context):
@@ -232,20 +266,41 @@ class GameMasterUI:
                 context=context
             )
             
+            print(f"Generating suggestions based on context: {context[:100]}...")
+            
             with st.spinner("Generating suggestions..."):
                 suggestions_text = st.session_state.agent.get_response(suggestion_prompt)
+                print(f"Raw suggestions response: {suggestions_text}")
                 
                 # Extract suggestions using regex
                 suggestions = re.findall(r'\d+\.\s+(.*?)(?=\n\d+\.|\Z)', suggestions_text, re.DOTALL)
                 
                 # Clean up suggestions
                 suggestions = [s.strip() for s in suggestions if s.strip()]
+                print(f"Extracted suggestions: {suggestions}")
                 
                 if suggestions:
                     st.session_state.suggestions = suggestions[:3]  # Limit to 3 suggestions
+                else:
+                    # Fallback if no suggestions were extracted
+                    st.session_state.suggestions = [
+                        "Explore the area",
+                        "Talk to someone nearby",
+                        "Check your inventory"
+                    ]
+                    print("Using fallback suggestions")
+            
+            print(f"Final suggestions set: {st.session_state.suggestions}")
         except Exception as e:
-            print(f"Error generating suggestions: {str(e)}")
-            st.session_state.suggestions = []
+            error_msg = f"Error generating suggestions: {str(e)}"
+            print(error_msg)
+            # Provide default suggestions if generation fails
+            st.session_state.suggestions = [
+                "Explore the area",
+                "Talk to someone nearby",
+                "Check your inventory"
+            ]
+            print("Using default suggestions due to error")
 
     def run(self):
         # Use a placeholder for the entire UI to allow complete clearing
@@ -283,27 +338,55 @@ class GameMasterUI:
                         
                         response = st.session_state.agent.get_response(launch_prompt)
                         if response:
+                            # Add the initial message
+                            message_index = len(st.session_state.messages)
                             st.session_state.messages.append({"role": "assistant", "content": response})
+                            
+                            # Generate image for the initial message
+                            with st.spinner("Generating your first adventure image..."):
+                                image = st.session_state.image_service.generate_image(response)
+                                if image:
+                                    # Store the generated image
+                                    st.session_state.generated_images[message_index] = image
+                            
                             st.session_state.launch_prompt_sent = True
+                            
+                            # Generate initial suggestions based on the first response
+                            self._generate_suggestions(response)
+                            
                             st.rerun()
                 else:
                     # Game is ready, display game page
                     st.title("Game Master")  # Display title once
                     self._display_game_page()
 
-    def _generate_and_display_image(self, text):
+    def _generate_and_display_image(self, text, message_index):
         """Generate and display an image based on the text"""
-        with st.spinner("Generating image..."):
-            image = st.session_state.image_service.generate_image(text)
-            if image:
-                st.image(
-                    image,
-                    use_container_width=True,
-                    output_format="PNG",
-                    clamp=True
-                )
+        # Check if we already have this image generated
+        if message_index in st.session_state.generated_images:
+            # Use the stored image
+            image = st.session_state.generated_images[message_index]
+            st.image(
+                image,
+                use_container_width=True,
+                output_format="PNG",
+                clamp=True
+            )
+        else:
+            # Generate a new image if we don't have it yet
+            with st.spinner("Generating image..."):
+                image = st.session_state.image_service.generate_image(text)
+                if image:
+                    # Store the image for future use
+                    st.session_state.generated_images[message_index] = image
+                    st.image(
+                        image,
+                        use_container_width=True,
+                        output_format="PNG",
+                        clamp=True
+                    )
 
-    def _display_message(self, message):
+    def _display_message(self, message, index):
         """Display a single message and its image if it's from the assistant"""
         with st.chat_message(message["role"]):
             if message["role"] == "assistant":
@@ -316,15 +399,15 @@ class GameMasterUI:
                 
                 # Generated image in right column
                 with right_col:
-                    self._generate_and_display_image(message["content"])
+                    self._generate_and_display_image(message["content"], index)
             else:
                 # Player's messages use full width
                 st.markdown(message["content"])
 
     def _display_chat_history(self):
         """Display all messages with their images"""
-        for message in st.session_state.messages:
-            self._display_message(message)
+        for i, message in enumerate(st.session_state.messages):
+            self._display_message(message, i)
 
     def save_game(self):
         if not st.session_state.messages:

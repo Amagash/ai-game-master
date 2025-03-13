@@ -1,18 +1,31 @@
 # Game prompts
 LAUNCH_PROMPT = """The player's name is {player_name} and you can welcome them to the game. 
 The player is a {player_gender} {player_race} {player_class}.
-Describe the surroundings of the player and create an atmosphere that the player can bounce off of."""
+Describe the surroundings of the player and create an atmosphere that the player can bounce off of. 
+Don't make more than 100 words."""
 
 # Suggestion prompt for generating player action options
-SUGGESTION_PROMPT = """Based on the current game context, generate 3 plausible and interesting actions that the player could take next.
-The player is a {player_gender} {player_race} {player_class} named {player_name}.
+SUGGESTION_PROMPT = """You are a helpful game master assistant. Your task is to generate exactly 3 plausible and interesting actions that the player could take next in the game.
+
+Player information:
+- Name: {player_name}
+- Gender: {player_gender}
+- Race: {player_race}
+- Class: {player_class}
 
 Current game context:
 {context}
 
-Provide exactly 3 short, specific action suggestions that would make sense in this context. 
-Format them as a numbered list (1., 2., 3.) with each suggestion being a short phrase or sentence that the player could say or do.
-Make sure the suggestions are varied and interesting, giving the player meaningful choices.
+IMPORTANT: Provide EXACTLY 3 short, specific action suggestions that would make sense in this context.
+Format them as a numbered list with each suggestion being a short phrase or sentence (5-10 words) that the player could say or do.
+
+For example:
+1. Investigate the strange noise
+2. Talk to the innkeeper about rumors
+3. Search for hidden treasures
+
+Your suggestions should be varied and interesting, giving the player meaningful choices.
+DO NOT include any explanations or additional text - ONLY the numbered list of 3 suggestions.
 """
 
 # Image generation prompts
