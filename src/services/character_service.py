@@ -1,13 +1,36 @@
 import boto3
 from src.config.aws_config import DYNAMODB_CONFIG
 
+
 class CharacterService:
+    """
+    Service for managing character data in DynamoDB.
+    
+    This class handles saving and retrieving character information,
+    including stats, inventory, and status.
+    """
+    
     def __init__(self):
+        """
+        Initialize the CharacterService with DynamoDB connection.
+        """
         self.dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_CONFIG['region'])
         self.table = self.dynamodb.Table(DYNAMODB_CONFIG['table_name'])
 
     def save_character(self, character_id, specs):
-        """Save a character's specifications to DynamoDB"""
+        """
+        Save a character's specifications to DynamoDB.
+        
+        Args:
+            character_id (str): Unique identifier for the character
+            specs (dict): Character specifications including name, race, class, and stats
+            
+        Returns:
+            bool: True if save was successful, False otherwise
+            
+        This method also adds default inventory and calculates derived stats
+        like maximum hit points based on class and constitution.
+        """
         try:
             # Default inventory for new characters
             default_inventory = [
@@ -40,6 +63,7 @@ class CharacterService:
             if not character_name:
                 raise ValueError("Character name is required")
 
+            # Create the DynamoDB item with all character data
             self.table.put_item(
                 Item={
                     "character_id": character_id,
@@ -74,7 +98,15 @@ class CharacterService:
             return False
 
     def get_character(self, character_id):
-        """Retrieve a character's specifications from DynamoDB"""
+        """
+        Retrieve a character's specifications from DynamoDB.
+        
+        Args:
+            character_id (str): Unique identifier for the character
+            
+        Returns:
+            dict: Character data if found, None otherwise
+        """
         try:
             response = self.table.get_item(
                 Key={'character_id': character_id}

@@ -7,13 +7,29 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from src.config.prompts import ImagePrompts
 
+
 class ImageError(Exception):
-    """Custom exception for errors returned by Amazon Nova Canvas"""
+    """
+    Custom exception for errors returned by Amazon Nova Canvas.
+    
+    Used to handle specific image generation errors from the service.
+    """
     def __init__(self, message):
         self.message = message
 
+
 class ImageService:
+    """
+    Service for generating images using AWS Bedrock image generation models.
+    
+    This class handles the interaction with Amazon Nova Canvas for generating
+    images based on text descriptions, with support for character context.
+    """
+    
     def __init__(self):
+        """
+        Initialize the ImageService with AWS Bedrock client and model settings.
+        """
         self.client = boto3.client(
             'bedrock-runtime',
             config=Config(read_timeout=300)
@@ -25,12 +41,26 @@ class ImageService:
         self.character_info = None
     
     def set_character_info(self, character_info):
-        """Set character information for image generation context"""
+        """
+        Set character information for image generation context.
+        
+        Args:
+            character_info (dict): Dictionary containing character details
+        """
         self.character_info = character_info
         self.logger.info(f"Character info set: {character_info}")
     
     def _summarize_text(self, text, max_length=500):
-        """Use Claude to generate a concise summary of the text for image generation"""
+        """
+        Use Claude to generate a concise summary of the text for image generation.
+        
+        Args:
+            text (str): The text to summarize
+            max_length (int): Maximum length of the summary
+            
+        Returns:
+            str: Summarized text suitable for image generation
+        """
         try:
             if len(text) <= max_length:
                 return text
@@ -99,7 +129,15 @@ class ImageService:
             return text[:max_length-3] + "..."
 
     def generate_image(self, text):
-        """Generate an image from a text prompt using Nova Canvas"""
+        """
+        Generate an image from a text prompt using Nova Canvas.
+        
+        Args:
+            text (str): The text description to generate an image from
+            
+        Returns:
+            BytesIO: Image data as a BytesIO object, or None if generation failed
+        """
         try:
             self.logger.info(f"Generating image with Amazon Nova Canvas model {self.model_id}")
             
@@ -148,16 +186,19 @@ class ImageService:
             return io.BytesIO(image_bytes)
             
         except ClientError as e:
+            # Handle AWS client errors (permissions, throttling, etc.)
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
             error_message = e.response.get("Error", {}).get("Message", "Unknown error")
             self.logger.error(f"Client error: {error_code} - {error_message}")
             print(f"Error generating image: {error_code} - {error_message}")
             return None
         except ImageError as e:
+            # Handle specific image generation errors
             self.logger.error(e.message)
             print(f"Image generation error: {e.message}")
             return None
         except Exception as e:
+            # Handle any other unexpected errors
             self.logger.error(f"Unexpected error: {str(e)}")
             print(f"Unexpected error generating image: {str(e)}")
             return None 

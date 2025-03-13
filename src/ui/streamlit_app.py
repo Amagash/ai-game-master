@@ -23,11 +23,25 @@ from src.services.image_service import ImageService
 from src.services.character_service import CharacterService
 from src.config.prompts import LAUNCH_PROMPT, SUGGESTION_PROMPT
 
+
 class GameMasterUI:
+    """
+    Main UI class for the Game Master application.
+    
+    This class handles all UI components, including character creation,
+    game display, chat interactions, and image generation.
+    """
+    
     def __init__(self):
+        """Initialize the GameMasterUI and set up session state variables."""
         self._initialize_session_state()
 
     def _initialize_session_state(self):
+        """
+        Initialize all session state variables needed for the application.
+        
+        This includes messages, services, character information, and UI state.
+        """
         if 'messages' not in st.session_state:
             st.session_state.messages = []
         if 'agent' not in st.session_state:
@@ -54,6 +68,11 @@ class GameMasterUI:
             st.session_state.generated_images = {}  # Store images by message index
 
     def _display_character_creation_page(self):
+        """
+        Display the character creation interface.
+        
+        Includes fields for character name, race, class, gender, and ability scores.
+        """
         st.header("Create Your Character")
         
         # Player name input
@@ -131,6 +150,7 @@ class GameMasterUI:
             wisdom = st.number_input("Wisdom", min_value=0, max_value=20, value=10, key="wisdom")
             charisma = st.number_input("Charisma", min_value=0, max_value=20, value=10, key="charisma")
 
+        # Collect all character specifications
         specs = {
             'character_name': name_input,
             'race': race,
@@ -144,6 +164,7 @@ class GameMasterUI:
             'Charisma': charisma
         }
 
+        # Start adventure button
         if st.button("Start Adventure", disabled=not name_input):
             character_id = str(uuid.uuid4())
             
@@ -166,6 +187,12 @@ class GameMasterUI:
                 st.error("Failed to save character. Please try again.")
 
     def _display_game_page(self):
+        """
+        Display the main game interface.
+        
+        Includes the character sidebar, chat history, suggestion buttons,
+        and text input for player actions.
+        """
         # Setup sidebar with character info first
         with st.sidebar:
             st.title(st.session_state.current_character['character_name'])
@@ -174,6 +201,7 @@ class GameMasterUI:
             
             st.divider()
             
+            # Display character stats with modifiers
             for stat, value in st.session_state.current_character.items():
                 if stat not in ['character_name', 'race', 'class', 'gender']:
                     modifier = (value - 10) // 2
@@ -226,7 +254,15 @@ class GameMasterUI:
             self._handle_user_input(prompt)
 
     def _handle_user_input(self, prompt):
-        """Process user input and get AI response"""
+        """
+        Process user input and get AI response.
+        
+        Args:
+            prompt (str): The user's input text
+            
+        This method adds the user message to chat history, gets an AI response,
+        generates an image for the response, and updates suggestions.
+        """
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -255,7 +291,15 @@ class GameMasterUI:
             st.rerun()
 
     def _generate_suggestions(self, context):
-        """Generate action suggestions based on the current context"""
+        """
+        Generate action suggestions based on the current context.
+        
+        Args:
+            context (str): The current game context (usually the last AI response)
+            
+        This method uses the AI to generate contextually relevant action suggestions
+        for the player to choose from.
+        """
         try:
             character = st.session_state.current_character
             suggestion_prompt = SUGGESTION_PROMPT.format(
@@ -303,6 +347,12 @@ class GameMasterUI:
             print("Using default suggestions due to error")
 
     def run(self):
+        """
+        Main method to run the application.
+        
+        Handles page routing between character creation and game pages,
+        and manages the initial game setup.
+        """
         # Use a placeholder for the entire UI to allow complete clearing
         main_container = st.empty()
         
@@ -361,7 +411,16 @@ class GameMasterUI:
                     self._display_game_page()
 
     def _generate_and_display_image(self, text, message_index):
-        """Generate and display an image based on the text"""
+        """
+        Generate and display an image based on the text.
+        
+        Args:
+            text (str): The text to generate an image from
+            message_index (int): The index of the message in the chat history
+            
+        This method checks if an image already exists for the message,
+        and only generates a new one if needed.
+        """
         # Check if we already have this image generated
         if message_index in st.session_state.generated_images:
             # Use the stored image
@@ -387,7 +446,13 @@ class GameMasterUI:
                     )
 
     def _display_message(self, message, index):
-        """Display a single message and its image if it's from the assistant"""
+        """
+        Display a single message and its image if it's from the assistant.
+        
+        Args:
+            message (dict): The message to display
+            index (int): The index of the message in the chat history
+        """
         with st.chat_message(message["role"]):
             if message["role"] == "assistant":
                 # Create two equal columns for better layout
@@ -405,11 +470,18 @@ class GameMasterUI:
                 st.markdown(message["content"])
 
     def _display_chat_history(self):
-        """Display all messages with their images"""
+        """
+        Display all messages in the chat history with their images.
+        """
         for i, message in enumerate(st.session_state.messages):
             self._display_message(message, i)
 
     def save_game(self):
+        """
+        Save the current game session to a PDF file in S3.
+        
+        Displays success or error messages to the user.
+        """
         if not st.session_state.messages:
             st.warning("No conversation to save!")
             return
@@ -425,12 +497,28 @@ class GameMasterUI:
             st.error(f"Error saving game: {result}")
 
     def save_character(self, character_id, specs):
-        """Save character to the database"""
+        """
+        Save character to the database.
+        
+        Args:
+            character_id (str): The unique ID for the character
+            specs (dict): The character specifications
+            
+        Returns:
+            bool: True if save was successful, False otherwise
+        """
         return st.session_state.character_service.save_character(character_id, specs)
 
+
 def main():
+    """
+    Main entry point for the application.
+    
+    Initializes and runs the GameMasterUI.
+    """
     app = GameMasterUI()
     app.run()
+
 
 if __name__ == "__main__":
     main() 
