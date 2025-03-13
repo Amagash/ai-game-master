@@ -9,6 +9,12 @@ class BedrockAgent:
     
     This class handles communication with the AWS Bedrock Agent service,
     allowing the application to send prompts and receive AI-generated responses.
+    The Bedrock Agent is configured with access to:
+    - Knowledge bases: For retrieving game-related information and lore
+    - Lambda functions: For executing game mechanics like dice rolls and character actions
+    
+    These integrations allow the AI to provide contextually relevant responses
+    and perform game-specific actions without requiring additional code in this application.
     """
     
     def __init__(self):
@@ -16,7 +22,9 @@ class BedrockAgent:
         Initialize the BedrockAgent with configuration from environment variables.
         
         Loads environment variables, validates required values, and sets up
-        the Bedrock Agent client.
+        the Bedrock Agent client. The agent ID and alias ID reference a pre-configured
+        Bedrock Agent that has the necessary knowledge bases and Lambda function
+        integrations already set up in the AWS console.
         """
         load_dotenv()
         self._validate_env_vars()
@@ -51,6 +59,13 @@ class BedrockAgent:
     def get_response(self, prompt, session_id="default-session"):
         """
         Send a prompt to the Bedrock Agent and get a response.
+        
+        The agent processes the prompt using its foundation model, knowledge bases,
+        and Lambda function integrations to generate an appropriate response. This
+        allows the agent to:
+        - Answer questions using its knowledge bases
+        - Execute game actions via Lambda functions (e.g., dice rolls)
+        - Generate creative narrative content
         
         Args:
             prompt (str): The text prompt to send to the agent

@@ -17,6 +17,23 @@ AI Game Master is an interactive application that uses AI to create a unique rol
 - Character data storage in [DynamoDB](https://aws.amazon.com/pm/dynamodb/?trk=b8f00cc8-e51d-4bfd-bf44-9b5ffb6acd1a&sc_channel=el)
 - Intuitive user interface with Streamlit
 - Custom dark theme
+- Clickable action suggestions for player guidance
+- Image caching to improve performance
+
+## AWS Bedrock Agent Integration
+
+The application uses a pre-configured AWS Bedrock Agent that enhances the game experience through:
+
+- **Knowledge Bases**: The agent has access to knowledge bases containing game lore, rules, and world information, allowing it to provide rich, consistent responses about the game world.
+
+- **Lambda Functions**: The agent can trigger Lambda functions to execute game mechanics like:
+  - Dice rolling for skill checks and combat
+  - Character action resolution
+  - Game state management
+
+- **Action Groups**: The agent is configured with action groups that define what operations it can perform, ensuring it can properly interpret player intentions and execute appropriate game actions.
+
+This integration allows the AI Game Master to not only generate narrative content but also understand and implement game mechanics without requiring additional code in the application itself.
 
 ## Prerequisites
 
@@ -110,6 +127,7 @@ The application will be accessible at: http://localhost:8501
 ### Game Play
 
 - Use the chat interface to interact with the AI Game Master
+- Click on suggested actions or type your own responses
 - Images will be generated based on the narrative
 - Character information is displayed in the sidebar
 - Save your game session using the "Save Game" button
