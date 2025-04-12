@@ -33,15 +33,17 @@ class StorageService:
         try:
             # Convert messages to PDF
             pdf_buffer = PDFService.create_chat_pdf(messages)
+
+            player_id = player_name.lower().strip()
             
             # Generate filename
-            filename = f"game_session_{player_name}.pdf"
+            filename = f"game_session_{player_id}.pdf"
             
             # Upload to S3
             self.s3_client.upload_fileobj(
                 pdf_buffer,
                 self.bucket_name,
-                filename,
+                f"game_sessions/{player_id}/{filename}",
                 ExtraArgs={'ContentType': 'application/pdf'}
             )
             return True, filename

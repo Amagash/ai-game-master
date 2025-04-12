@@ -3,6 +3,13 @@ from datetime import datetime
 import uuid
 import re
 import time
+import random
+import requests
+import json
+
+# AWS SDK + Retry imports
+from botocore.exceptions import EventStreamError
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Third-party imports
 import streamlit as st
@@ -35,6 +42,7 @@ class GameMasterUI:
     def __init__(self):
         """Initialize the GameMasterUI and set up session state variables."""
         self._initialize_session_state()
+        self.rate_limiter = RateLimiter(2.0)  # 2 requests per second
 
     def _initialize_session_state(self):
         """
@@ -253,42 +261,45 @@ class GameMasterUI:
         if prompt := st.chat_input("Or type what you would like to do...", max_chars=1000):
             self._handle_user_input(prompt)
 
-    def _handle_user_input(self, prompt):
-        """
-        Process user input and get AI response.
+    # def _handle_user_input(self, prompt):
+    #     """
+    #     Process user input and get AI response.
         
-        Args:
-            prompt (str): The user's input text
+    #     Args:
+    #         prompt (str): The user's input text
             
-        This method adds the user message to chat history, gets an AI response,
-        generates an image for the response, and updates suggestions.
-        """
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    #     This method adds the user message to chat history, gets an AI response,
+    #     generates an image for the response, and updates suggestions.
+    #     """
+    #     # Add user message to chat history
+    #     st.session_state.messages.append({"role": "user", "content": prompt})
         
-        # Clear suggestions after user input
-        st.session_state.suggestions = []
+    #     # Clear suggestions after user input
+    #     st.session_state.suggestions = []
         
-        # Get AI response
-        with st.spinner("Thinking..."):
-            response = st.session_state.agent.get_response(prompt)
+    #     # Get AI response
+    #     with st.spinner("Thinking..."):
+    #         if prompt == 'Talk to someone nearby':
+    #             print('ici')
+    #         response = st.session_state.agent.get_response(prompt)
+    #         print(f"AI response: {response}")
             
-        if response:
-            # Add the new message to the chat history
-            message_index = len(st.session_state.messages)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+    #     if response:
+    #         # Add the new message to the chat history
+    #         message_index = len(st.session_state.messages)
+    #         st.session_state.messages.append({"role": "assistant", "content": response})
             
-            # Generate image for the new message only
-            with st.spinner("Generating image for the new response..."):
-                image = st.session_state.image_service.generate_image(response)
-                if image:
-                    # Store the generated image in session state
-                    st.session_state.generated_images[message_index] = image
+    #         # Generate image for the new message only
+    #         with st.spinner("Generating image for the new response..."):
+    #             image = st.session_state.image_service.generate_image(response)
+    #             if image:
+    #                 # Store the generated image in session state
+    #                 st.session_state.generated_images[message_index] = image
             
-            # Always generate new suggestions after AI response
-            self._generate_suggestions(response)
+    #         # Always generate new suggestions after AI response
+    #         self._generate_suggestions(response)
             
-            st.rerun()
+    #         st.rerun()
 
     def _generate_suggestions(self, context):
         """
@@ -509,6 +520,147 @@ class GameMasterUI:
         """
         return st.session_state.character_service.save_character(character_id, specs)
 
+    @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=4, max=10),
+            reraise=True
+        )
+    def _get_ai_response_with_retry(self, prompt: str) -> str:
+        """
+        Get AI response with exponential backoff retry mechanism.
+        
+        Args:
+            prompt (str): The user input prompt
+            
+        Returns:
+            str: The AI response
+            
+        Raises:
+            EventStreamError: If all retry attempts fail
+        """
+        try:
+            # Add jitter to prevent thundering herd
+            jitter = random.uniform(0.1, 0.5)
+            time.sleep(jitter)
+            
+            # Wait if rate limit requires
+            wait_time = self.rate_limiter.acquire()
+            if wait_time > 0:
+                time.sleep(wait_time)
+                
+            return st.session_state.agent.get_response(prompt)
+            
+        except EventStreamError as e:
+            if "throttlingException" in str(e):
+                print(f"Rate limit hit, retrying with backoff: {str(e)}")
+                raise  # This will trigger the retry
+            raise  # Re-raise other EventStreamErrors
+
+    def _process_successful_response(self, response: str) -> None:
+        """
+        Process a successful AI response.
+        
+        Args:
+            response (str): The AI response to process
+        """
+        # Add the new message to chat history
+        message_index = len(st.session_state.messages)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # Generate image with rate limiting
+        try:
+            with st.spinner("Generating image for the new response..."):
+                if 'generated_images' not in st.session_state:
+                    st.session_state.generated_images = {}
+                
+                # Add delay before image generation to prevent rate limiting
+                time.sleep(1)
+                image = st.session_state.image_service.generate_image(response)
+                
+                if image:
+                    st.session_state.generated_images[message_index] = image
+                else:
+                    st.warning("Could not generate image for this response")
+        except Exception as e:
+            st.warning(f"Error generating image: {str(e)}")
+            
+        # Generate suggestions with rate limiting
+        try:
+            # Add delay before generating suggestions
+            time.sleep(1)
+            self._generate_suggestions(response)
+        except Exception as e:
+            st.warning(f"Error generating suggestions: {str(e)}")
+            
+        # Rerun if we have messages
+        if st.session_state.messages:
+            st.rerun()
+
+    def _handle_user_input(self, prompt: str) -> None:
+        """
+        Process user input and get AI response with rate limiting and retries.
+        
+        Args:
+            prompt (str): The user's input text
+        """
+        try:
+            if not prompt or not isinstance(prompt, str):
+                st.error("Invalid input. Please provide a valid text message.")
+                return
+
+            # Add user message to chat history
+            if 'messages' not in st.session_state:
+                st.session_state.messages = []
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Clear suggestions
+            if 'suggestions' not in st.session_state:
+                st.session_state.suggestions = []
+            st.session_state.suggestions.clear()
+            
+            # Get AI response with retry mechanism
+            response = None
+            with st.spinner("Thinking..."):
+                try:
+                    response = self._get_ai_response_with_retry(prompt)
+                    if not response:
+                        st.warning("Received empty response from AI agent")
+                        return
+                except Exception as e:
+                    st.error(f"Error getting AI response: {str(e)}")
+                    return
+                
+            # Process response if successful
+            if response:
+                self._process_successful_response(response)
+
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {str(e)}")
+
+class RateLimiter:
+    def __init__(self, tokens_per_second: float):
+        self.tokens_per_second = tokens_per_second
+        self.tokens = tokens_per_second
+        self.last_update = time.time()
+
+    def acquire(self) -> float:
+        """
+        Acquire a token and return the time to wait if necessary.
+        
+        Returns:
+            float: Time to wait in seconds before proceeding
+        """
+        now = time.time()
+        time_passed = now - self.last_update
+        self.tokens = min(self.tokens_per_second,
+                         self.tokens + time_passed * self.tokens_per_second)
+        self.last_update = now
+
+        if self.tokens < 1:
+            return (1 - self.tokens) / self.tokens_per_second
+        else:
+            self.tokens -= 1
+            return 0
 
 def main():
     """
