@@ -260,46 +260,7 @@ class GameMasterUI:
         # Regular text input
         if prompt := st.chat_input("Or type what you would like to do...", max_chars=1000):
             self._handle_user_input(prompt)
-
-    # def _handle_user_input(self, prompt):
-    #     """
-    #     Process user input and get AI response.
-        
-    #     Args:
-    #         prompt (str): The user's input text
             
-    #     This method adds the user message to chat history, gets an AI response,
-    #     generates an image for the response, and updates suggestions.
-    #     """
-    #     # Add user message to chat history
-    #     st.session_state.messages.append({"role": "user", "content": prompt})
-        
-    #     # Clear suggestions after user input
-    #     st.session_state.suggestions = []
-        
-    #     # Get AI response
-    #     with st.spinner("Thinking..."):
-    #         if prompt == 'Talk to someone nearby':
-    #             print('ici')
-    #         response = st.session_state.agent.get_response(prompt)
-    #         print(f"AI response: {response}")
-            
-    #     if response:
-    #         # Add the new message to the chat history
-    #         message_index = len(st.session_state.messages)
-    #         st.session_state.messages.append({"role": "assistant", "content": response})
-            
-    #         # Generate image for the new message only
-    #         with st.spinner("Generating image for the new response..."):
-    #             image = st.session_state.image_service.generate_image(response)
-    #             if image:
-    #                 # Store the generated image in session state
-    #                 st.session_state.generated_images[message_index] = image
-            
-    #         # Always generate new suggestions after AI response
-    #         self._generate_suggestions(response)
-            
-    #         st.rerun()
 
     def _generate_suggestions(self, context):
         """
