@@ -35,7 +35,7 @@ class ImageService:
             config=Config(read_timeout=300)
         )
         self.model_id = 'amazon.nova-canvas-v1:0'  # Using Amazon Nova Canvas
-        self.llm_model_id = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'  # Claude 3.7 Sonnet for summarization
+        self.llm_model_id = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'  # Claude 3.5 Haiku for summarization
         self.logger = logging.getLogger(__name__)
         # Store character information
         self.character_info = None

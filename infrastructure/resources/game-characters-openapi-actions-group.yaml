@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Game Characters API
+  description: "API for managing game characters."
+  version: 1.0.0
+  contact: {}
+servers:
+- url: https://[API GW ID].execute-api.[AWS REGION].amazonaws.com
+paths:
+  /api/characters:
+    post:
+      summary: Create Character
+      description: "Create a new character."
+      operationId: createCharacter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Aragorn"
+                race:
+                  type: string
+                  example: "Human"
+                class:
+                  type: string
+                  example: "Ranger"
+                playerId:
+                  type: string
+                  example: "user123"
+      responses:
+        '201':
+          description: 'Created'
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '500':
+          description: 'Internal Server Error'
+    get:
+      summary: Get All Characters
+      description: "Get all characters."
+      operationId: getAllCharacters
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '403':
+          description: 'Forbidden'
+        '500':
+          description: 'Internal Server Error'
+  
+  /api/characters/{characterId}:
+    get:
+      summary: Get Character
+      description: "Get a character's details."
+      operationId: getCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: "The ID of the character to retrieve."
+          schema:
+            type: string
+            example: "12345"
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'
+    
+    put:
+      summary: Update Character
+      description: "Update a character's details."
+      operationId: updateCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: "The ID of the character to update."
+          schema:
+            type: string
+            example: "12345"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Aragorn"
+                race:
+                  type: string
+                  example: "Human"
+                class:
+                  type: string
+                  example: "Ranger"
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'
+    
+    delete:
+      summary: Delete Character
+      description: "Delete a character."
+      operationId: deleteCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: "The ID of the character to delete."
+          schema:
+            type: string
+            example: "12345"
+      responses:
+        '204':
+          description: 'No Content'
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'
+  
+  /api/characters/player/{playerId}:
+    get:
+      summary: Get Characters by Player ID
+      description: "Get all characters belonging to a specific player."
+      operationId: getCharactersByPlayerId
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          description: "The ID of the player whose characters to retrieve."
+          schema:
+            type: string
+            example: "user123"
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'
+  
+  /api/characters/{characterId}/experience:
+    post:
+      summary: Add Experience Points
+      description: "Add experience points to a character."
+      operationId: addExperiencePoints
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: "The ID of the character to add experience points to."
+          schema:
+            type: string
+            example: "12345"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                experiencePoints:
+                  type: integer
+                  example: 100
+                reason:
+                  type: string
+                  example: "Completed quest"
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'
+  
+  /api/characters/{characterId}/progression:
+    get:
+      summary: Get Character Progression
+      description: "Get character progression information."
+      operationId: getCharacterProgression
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: "The ID of the character to get progression for."
+          schema:
+            type: string
+            example: "12345"
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  level:
+                    type: integer
+                    example: 5
+                  experiencePoints:
+                    type: integer
+                    example: 2500
+                  nextLevelThreshold:
+                    type: integer
+                    example: 3000
+                  abilities:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Stealth", "Archery", "Tracking"]
+        '400':
+          description: 'Bad Request'
+        '403':
+          description: 'Forbidden'
+        '404':
+          description: 'Not Found'
+        '500':
+          description: 'Internal Server Error'

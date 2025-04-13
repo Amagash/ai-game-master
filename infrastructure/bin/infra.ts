@@ -5,8 +5,8 @@ import 'source-map-support/register';
 import { App } from 'aws-cdk-lib';
 /***** END CDK *****/
 
-// import { LocalGenAIStack } from '../lib/local-stack';
-import { GenAIDNDStack } from '../lib/genai-dnd-stack';
+// import { GameCharactersMCPServerStack } from 'lib/dnd-mcp-game-characters-stack';
+import { DNDGenAIStack } from '../lib/dnd-genai-stack';
 
 const app = new App();
 
@@ -18,14 +18,17 @@ const stackProps = {
 };
 const devEnv = process.env.DEV_ENV || "local";
 if (devEnv === "local") {
-    // new LocalGenAIStack(app, "LocalGenAIStack", {
-    //     ...stackProps,
-    //     description: "This stack creates backend resources (locally) to experiment on our AI Role Playing Game application"
-    // });
+    // TO DO: Local development
 }
 else {
-    new GenAIDNDStack(app, 'GenAIDNDStack', {
+    // new GameCharactersMCPServerStack(app, 'GameCharactersMCPServerStack', {
+    //     ...stackProps,
+    //     description: "This stack creates ALL required resources to get our Game Characters MCP Server up and running",
+    //     containerImage: process.env.CONTAINER_IMAGE as string,
+    //     containerPort: 8081
+    // });
+    new DNDGenAIStack(app, 'DNDGenAIStack', {
         ...stackProps,
-        description: "This stack creates backend resources for our AI Role Playing Game application"
+        description: "This stack creates required GenAI backend resources to provide great D&D Game Sessions on our AI Role Playing Game application"
     });
 }

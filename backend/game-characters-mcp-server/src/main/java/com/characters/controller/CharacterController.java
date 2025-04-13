@@ -1,0 +1,89 @@
+package com.characters.controller;
+
+import com.characters.model.GameCharacters;
+import com.characters.service.CharacterService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/characters")
+public class CharacterController {
+
+    private final CharacterService characterService;
+
+    public CharacterController(CharacterService characterService) {
+        this.characterService = characterService;
+    }
+
+    @PostMapping
+    public ResponseEntity<GameCharacters> createCharacter(@RequestBody GameCharacters character) {
+        GameCharacters createdCharacter = characterService.createCharacter(character);
+        return new ResponseEntity<>(createdCharacter, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{characterId}")
+    public ResponseEntity<GameCharacters> getCharacter(@PathVariable String characterId) {
+        return characterService.getCharacter(characterId)
+                .map(character -> new ResponseEntity<>(character, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GameCharacters>> getAllCharacters() {
+        List<GameCharacters> characters = characterService.getAllCharacters();
+        return new ResponseEntity<>(characters, HttpStatus.OK);
+    }
+
+    @PutMapping("/{characterId}")
+    public ResponseEntity<GameCharacters> updateCharacter(
+            @PathVariable String characterId,
+            @RequestBody GameCharacters character) {
+        return characterService.updateCharacter(characterId, character)
+                .map(updatedCharacter -> new ResponseEntity<>(updatedCharacter, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @DeleteMapping("/{characterId}")
+    public ResponseEntity<Void> deleteCharacter(@PathVariable String characterId) {
+        characterService.deleteCharacter(characterId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+    
+    @GetMapping("/player/{playerId}")
+    public ResponseEntity<List<GameCharacters>> getCharactersByPlayerId(@PathVariable String playerId) {
+        List<GameCharacters> characters = characterService.getCharactersByPlayerId(playerId);
+        return new ResponseEntity<>(characters, HttpStatus.OK);
+    }
+    
+    /**
+     * Add experience points to a character
+     */
+    @PostMapping("/{characterId}/experience")
+    public ResponseEntity<GameCharacters> addExperience(
+            @PathVariable String characterId,
+            @RequestBody Map<String, Integer> experienceRequest) {
+        
+        Integer xpToAdd = experienceRequest.get("experiencePoints");
+        if (xpToAdd == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
+        return characterService.addExperience(characterId, xpToAdd)
+                .map(updatedCharacter -> new ResponseEntity<>(updatedCharacter, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+    
+    /**
+     * Get character progression information
+     */
+    @GetMapping("/{characterId}/progression")
+    public ResponseEntity<CharacterService.CharacterProgressionInfo> getProgressionInfo(@PathVariable String characterId) {
+        return characterService.getProgressionInfo(characterId)
+                .map(progressInfo -> new ResponseEntity<>(progressInfo, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+}

@@ -16,6 +16,6 @@ S3_CONFIG = {
 
 # DynamoDB configuration for storing character data
 DYNAMODB_CONFIG = {
-    'table_name': os.getenv('DYNAMODB_TABLE_NAME', 'game_characters'),  # Default table name
+    'table_name': os.getenv('DYNAMODB_TABLE_NAME', 'genai-dnd-game-characters'),  # Default table name
     'region': AWS_CONFIG['region']  # Use the same region as general AWS config
 } 
