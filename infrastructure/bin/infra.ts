@@ -5,7 +5,7 @@ import 'source-map-support/register';
 import { App } from 'aws-cdk-lib';
 /***** END CDK *****/
 
-// import { GameCharactersMCPServerStack } from 'lib/dnd-mcp-game-characters-stack';
+import { GameCharactersMCPServerStack } from '../lib/dnd-mcp-game-characters-stack';
 import { DNDGenAIStack } from '../lib/dnd-genai-stack';
 
 const app = new App();
@@ -21,12 +21,10 @@ if (devEnv === "local") {
     // TO DO: Local development
 }
 else {
-    // new GameCharactersMCPServerStack(app, 'GameCharactersMCPServerStack', {
-    //     ...stackProps,
-    //     description: "This stack creates ALL required resources to get our Game Characters MCP Server up and running",
-    //     containerImage: process.env.CONTAINER_IMAGE as string,
-    //     containerPort: 8081
-    // });
+    new GameCharactersMCPServerStack(app, 'GameCharactersMCPServerStack', {
+        ...stackProps,
+        description: "This stack creates ALL required resources to get our Game Characters MCP Server up and running"
+    });
     new DNDGenAIStack(app, 'DNDGenAIStack', {
         ...stackProps,
         description: "This stack creates required GenAI backend resources to provide great D&D Game Sessions on our AI Role Playing Game application"

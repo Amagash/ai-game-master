@@ -11,11 +11,11 @@ AWS_CONFIG = {
 
 # S3 bucket configuration for storing game sessions
 S3_CONFIG = {
-    'bucket_name': os.getenv('S3_BUCKET_NAME')
+    'bucket_name': os.getenv('S3_BUCKET_NAME', 'dnd-genai-game-assets') # Default bucket name
 }
 
 # DynamoDB configuration for storing character data
 DYNAMODB_CONFIG = {
-    'table_name': os.getenv('DYNAMODB_TABLE_NAME', 'genai-dnd-game-characters'),  # Default table name
+    'table_name': os.getenv('DYNAMODB_TABLE_NAME', 'dnd-mcp-game-characters'),  # Default table name
     'region': AWS_CONFIG['region']  # Use the same region as general AWS config
 } 

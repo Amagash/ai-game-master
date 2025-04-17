@@ -2,6 +2,8 @@ package com.characters.service;
 
 import com.characters.model.GameCharacters;
 import com.characters.repository.CharacterRepository;
+
+import com.characters.service.ExperienceService;
 import org.springframework.stereotype.Service;
 
 import org.springframework.ai.tool.annotation.Tool;

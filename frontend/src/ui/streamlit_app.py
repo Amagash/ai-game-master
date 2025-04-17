@@ -6,17 +6,22 @@ import time
 import random
 import requests
 import json
+import asyncio
 
 # AWS SDK + Retry imports
 from botocore.exceptions import EventStreamError
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+# MCP imports
+from fastmcp import Client
+from fastmcp.client.transports import SSETransport
 
 # Third-party imports
 import streamlit as st
 
 # Set page configuration
 st.set_page_config(
-    page_title="Game Master",
+    page_title="AI Game Master",
     page_icon="🎲",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -175,10 +180,11 @@ class GameMasterUI:
         # Start adventure button
         if st.button("Start Adventure", disabled=not name_input):
             character_id = str(uuid.uuid4())
+            success = False
             
             # Show saving message
             with st.spinner("Saving your character..."):
-                success = self.save_character(character_id, specs)
+                success = asyncio.run(self._create_character_async(specs))
             
             if success:
                 st.success(f"Character saved successfully! Preparing your adventure...")
@@ -194,6 +200,27 @@ class GameMasterUI:
             else:
                 st.error("Failed to save character. Please try again.")
 
+
+    async def _create_character_async(self, character_specs):
+        """
+        Asynchronously create a character using the MCP client.
+        
+        Args:
+            character_specs (dict): Character specifications
+            
+        Returns:
+            dict: Result from the character creation
+        """
+        try:
+            client = Client(SSETransport("http://localhost:8081/api/characters/mcp/message"))
+            async with client:
+                result = await client.call_tool("createCharacter", character_specs)
+                return True
+        except Exception as e:
+            print(f"Error saving character: {str(e)}")
+            return False
+            
+    
     def _display_game_page(self):
         """
         Display the main game interface.

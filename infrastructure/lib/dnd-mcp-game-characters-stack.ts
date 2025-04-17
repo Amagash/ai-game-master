@@ -22,121 +22,121 @@ export class GameCharactersMCPServerStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        const containerPort = 8081;
-        const gcServiceName = this._appResourcePrefix + '-game-characters-service';
+        // const containerPort = 8081;
+        // const gcServiceName = this._appResourcePrefix + '-game-characters-service';
 
-        // Create VPC
-        const vpc = new ec2.Vpc(this, 'GCVPC', {
-            maxAzs: 2,
-            subnetConfiguration: [
-                {
-                    cidrMask: 24,
-                    name: 'Public',
-                    subnetType: ec2.SubnetType.PUBLIC,
-                }
-            ],
-        });
+        // // Create VPC
+        // const vpc = new ec2.Vpc(this, 'GCVPC', {
+        //     maxAzs: 2,
+        //     subnetConfiguration: [
+        //         {
+        //             cidrMask: 24,
+        //             name: 'Public',
+        //             subnetType: ec2.SubnetType.PUBLIC,
+        //         }
+        //     ],
+        // });
 
-        // Create ECS Cluster
-        const cluster = new ecs.Cluster(this, 'GCECSCluster', {
-            vpc,
-            clusterName: `${this._appResourcePrefix}-gc-cluster`,
-        });
+        // // Create ECS Cluster
+        // const cluster = new ecs.Cluster(this, 'GCECSCluster', {
+        //     vpc,
+        //     clusterName: `${this._appResourcePrefix}-gc-cluster`,
+        // });
 
-        // Create Log Group
-        const logGroup = new logs.LogGroup(this, 'GCLogGroup', {
-            logGroupName: `/ecs/${Stack.of(this).stackName}`,
-            removalPolicy: RemovalPolicy.DESTROY,
-            retention: logs.RetentionDays.ONE_DAY,
-        });
+        // // Create Log Group
+        // const logGroup = new logs.LogGroup(this, 'GCLogGroup', {
+        //     logGroupName: `/ecs/${Stack.of(this).stackName}`,
+        //     removalPolicy: RemovalPolicy.DESTROY,
+        //     retention: logs.RetentionDays.ONE_DAY,
+        // });
 
-        // Create Task Role
-        const taskRole = new iam.Role(this, 'GCTaskRole', {
-            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-        });
+        // // Create Task Role
+        // const taskRole = new iam.Role(this, 'GCTaskRole', {
+        //     assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+        // });
 
-        // Create Task Definition
-        const taskDefinition = new ecs.FargateTaskDefinition(this, 'GCTaskDefinition', {
-            memoryLimitMiB: 512,
-            cpu: 256,
-            taskRole,
-            family: gcServiceName,
-        });
+        // // Create Task Definition
+        // const taskDefinition = new ecs.FargateTaskDefinition(this, 'GCTaskDefinition', {
+        //     memoryLimitMiB: 512,
+        //     cpu: 256,
+        //     taskRole,
+        //     family: gcServiceName,
+        // });
 
-        // Add Container to Task Definition
-        const container = taskDefinition.addContainer('GCServiceContainer', {
-            image: ecs.ContainerImage.fromRegistry('game-characters-mcp-server:latest'),
-            logging: ecs.LogDriver.awsLogs({
-                logGroup,
-                streamPrefix: 'gc-ecs',
-            }),
-        });
+        // // Add Container to Task Definition
+        // const container = taskDefinition.addContainer('GCServiceContainer', {
+        //     image: ecs.ContainerImage.fromRegistry('game-characters-mcp-server:latest'),
+        //     logging: ecs.LogDriver.awsLogs({
+        //         logGroup,
+        //         streamPrefix: 'gc-ecs',
+        //     }),
+        // });
 
-        container.addPortMappings({
-            containerPort,
-        });
+        // container.addPortMappings({
+        //     containerPort,
+        // });
 
-        // Create Security Groups
-        const lbSecurityGroup = new ec2.SecurityGroup(this, 'GCLoadBalancerSecurityGroup', {
-            vpc,
-            description: 'Security group for ALB',
-            allowAllOutbound: true,
-        });
+        // // Create Security Groups
+        // const lbSecurityGroup = new ec2.SecurityGroup(this, 'GCLoadBalancerSecurityGroup', {
+        //     vpc,
+        //     description: 'Security group for ALB',
+        //     allowAllOutbound: true,
+        // });
 
-        lbSecurityGroup.addIngressRule(
-            ec2.Peer.ipv4("87.89.176.179/32"),
-            ec2.Port.tcp(80),
-            'Allow inbound HTTP traffic'
-        );
+        // lbSecurityGroup.addIngressRule(
+        //     ec2.Peer.ipv4("87.89.176.179/32"),
+        //     ec2.Port.tcp(80),
+        //     'Allow inbound HTTP traffic'
+        // );
 
-        const containerSecurityGroup = new ec2.SecurityGroup(this, 'GCContainerSecurityGroup', {
-            vpc,
-            description: 'Security group for container',
-            allowAllOutbound: true,
-        });
+        // const containerSecurityGroup = new ec2.SecurityGroup(this, 'GCContainerSecurityGroup', {
+        //     vpc,
+        //     description: 'Security group for container',
+        //     allowAllOutbound: true,
+        // });
 
-        containerSecurityGroup.addIngressRule(
-            ec2.Peer.securityGroupId(lbSecurityGroup.securityGroupId),
-            ec2.Port.tcp(containerPort),
-            'Allow inbound traffic from ALB'
-        );
+        // containerSecurityGroup.addIngressRule(
+        //     ec2.Peer.securityGroupId(lbSecurityGroup.securityGroupId),
+        //     ec2.Port.tcp(containerPort),
+        //     'Allow inbound traffic from ALB'
+        // );
 
-        // Create ALB
-        const alb = new elbv2.ApplicationLoadBalancer(this, 'GCLoadBalancer', {
-            vpc,
-            internetFacing: true,
-            securityGroup: lbSecurityGroup,
-        });
+        // // Create ALB
+        // const alb = new elbv2.ApplicationLoadBalancer(this, 'GCLoadBalancer', {
+        //     vpc,
+        //     internetFacing: true,
+        //     securityGroup: lbSecurityGroup,
+        // });
 
-        // Create Target Group
-        const targetGroup = new elbv2.ApplicationTargetGroup(this, 'GCTargetGroup', {
-            vpc,
-            port: containerPort,
-            protocol: elbv2.ApplicationProtocol.HTTP,
-            targetType: elbv2.TargetType.IP,
-            healthCheck: {
-                path: '/actuator/health',
-            },
-        });
+        // // Create Target Group
+        // const targetGroup = new elbv2.ApplicationTargetGroup(this, 'GCTargetGroup', {
+        //     vpc,
+        //     port: containerPort,
+        //     protocol: elbv2.ApplicationProtocol.HTTP,
+        //     targetType: elbv2.TargetType.IP,
+        //     healthCheck: {
+        //         path: '/actuator/health',
+        //     },
+        // });
 
-        // Add Listener
-        const listener = alb.addListener('GCListener', {
-            port: 80,
-            defaultTargetGroups: [targetGroup],
-        });
+        // // Add Listener
+        // const listener = alb.addListener('GCListener', {
+        //     port: 80,
+        //     defaultTargetGroups: [targetGroup],
+        // });
 
-        // Create Fargate Service
-        const fargateService = new ecs.FargateService(this, 'GCService', {
-            cluster,
-            taskDefinition,
-            serviceName: gcServiceName,
-            desiredCount: 1,
-            securityGroups: [containerSecurityGroup],
-            assignPublicIp: false,
-            healthCheckGracePeriod: Duration.seconds(60),
-        });
+        // // Create Fargate Service
+        // const fargateService = new ecs.FargateService(this, 'GCService', {
+        //     cluster,
+        //     taskDefinition,
+        //     serviceName: gcServiceName,
+        //     desiredCount: 1,
+        //     securityGroups: [containerSecurityGroup],
+        //     assignPublicIp: false,
+        //     healthCheckGracePeriod: Duration.seconds(60),
+        // });
 
-        fargateService.attachToApplicationTargetGroup(targetGroup);
+        // fargateService.attachToApplicationTargetGroup(targetGroup);
 
         // Create a DynamoDB table to store game characters' specifications
         const charactersTable = new dynamodb.Table(this, 'DNDCharactersTable', {
@@ -147,10 +147,10 @@ export class GameCharactersMCPServerStack extends Stack {
         });
 
         // Outputs
-        new CfnOutput(this, 'GCLoadBalancerDNS', {
-            value: alb.loadBalancerDnsName,
-            exportName: 'GCLoadBalancerDNS',
-        });
+        // new CfnOutput(this, 'GCLoadBalancerDNS', {
+        //     value: alb.loadBalancerDnsName,
+        //     exportName: 'GCLoadBalancerDNS',
+        // });
         new CfnOutput(this, 'DNDCharactersTableName', {
             value: charactersTable.tableName,
             exportName: 'DNDCharactersTableName',

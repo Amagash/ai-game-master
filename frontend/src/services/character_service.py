@@ -2,6 +2,7 @@ import boto3
 from src.config.aws_config import DYNAMODB_CONFIG
 
 
+
 class CharacterService:
     """
     Service for managing character data in DynamoDB.

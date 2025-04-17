@@ -47,3 +47,5 @@ typing-extensions==4.12.2
 tzdata==2025.1
 urllib3==2.3.0
 tenacity==9.1.2
+fastmcp==2.2.0
+asyncio==3.4.3
