@@ -11,7 +11,7 @@ if [[ $# -ge 3 ]]; then
     shift; shift
     if [ "$DEV_ENV" = "local" ]; then
         echo "Running in local development environment"
-        npx cdklocal destroy "*"
+        # npx cdklocal destroy "*"
     else
         echo "Running in non-local environment: $DEV_ENV"
         npx cdk destroy "*" --profile $AWS_PROFILE

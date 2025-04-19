@@ -1,177 +1,117 @@
-# D&D Character Management Service
+# Game Characters Management Service - A Spring Boot DynamoDB-backed Character Service
 
-This Spring Boot application provides a microservice for managing D&D game characters stored in Amazon DynamoDB.
+This Spring Boot application provides a robust microservice for managing game characters with DynamoDB persistence. It offers comprehensive character management features including experience tracking, level progression, and inventory management through MCP tools.
 
-## Overview
+The service is built using Spring Boot and integrates with AWS DynamoDB for data persistence. It provides tools for character creation, updates, and progression tracking while maintaining character state and inventory. The service is designed to be part of a larger game system, exposing its functionality through Spring AI Tool annotations for seamless integration with AI-powered game features.
 
-The service provides REST endpoints for creating, reading, updating, and deleting character data from a DynamoDB table.
-
-## Prerequisites
-
-- Java 17
-- Maven
-- AWS account with DynamoDB access
-- AWS credentials configured locally
-
-## Configuration
-
-The application uses the following configuration properties in `application.properties`:
-
-```properties
-# AWS Configuration
-aws.region=us-west-2
-aws.dynamodb.table-name=genai-dnd-game-characters
+## Repository Structure
+```
+backend/game-characters-mcp-server/
+├── mvnw                    # Maven wrapper script for Unix systems
+├── mvnw.cmd               # Maven wrapper script for Windows
+├── pom.xml                # Maven project configuration
+└── src/
+    └── main/
+        ├── java/com/characters/
+        │   ├── config/
+        │   │   └── DynamoDBConfig.java       # AWS DynamoDB configuration
+        │   ├── GameCharactersApplication.java # Main application entry point
+        │   ├── model/                        # Data model classes
+        │   │   ├── CurrentStatus.java        # Character status tracking
+        │   │   ├── GameCharacters.java       # Main character entity
+        │   │   ├── InventoryItem.java        # Character inventory items
+        │   │   └── Stats.java                # Character statistics
+        │   ├── repository/
+        │   │   └── CharacterRepository.java   # DynamoDB data access
+        │   └── service/
+        │       ├── CharacterService.java      # Character management logic
+        │       └── ExperienceService.java     # Experience/leveling system
+        └── resources/
+            └── application.properties         # Application configuration
 ```
 
-You can modify these properties to match your AWS environment.
+## Usage Instructions
+### Prerequisites
+- Java 17 or later
+- AWS Account with DynamoDB access
+- AWS CLI configured with appropriate credentials
+- Maven 3.9.x (or use included wrapper)
 
-## DynamoDB Table Structure
+### Installation
 
-The application expects a DynamoDB table with the following structure:
-- Table name: Configured via `aws.dynamodb.table-name` property
-- Partition key: `character_id`
-
-## Character Model
-
-The character model includes:
-- Character ID (partition key as `character_id`)
-- Character name (as `character_name`)
-- Player ID (as `player_id`)
-- Character class (as `class`)
-- Race
-- Gender
-- Level and experience
-- Stats (strength, dexterity, constitution, intelligence, wisdom, charisma)
-- Inventory (list of items with `item_name` and `quantity`)
-- Current status (as `current_status` with `hp`, `max_hp`, `condition`, and `buffs`)
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST   | /api/characters | Create a new character |
-| GET    | /api/characters/{characterId} | Get a character by ID |
-| GET    | /api/characters | Get all characters |
-| PUT    | /api/characters/{characterId} | Update a character |
-| DELETE | /api/characters/{characterId} | Delete a character |
-| GET    | /api/characters/player/{playerId} | Get characters by player ID |
-| POST   | /api/characters/{characterId}/experience | Add experience points to a character |
-| GET    | /api/characters/{characterId}/progression | Get character progression information |
-
-## Experience and Leveling
-
-The application implements D&D 5e Basic Rules (2018) for experience points and character leveling:
-
-- Characters automatically level up when they reach the XP threshold for the next level
-- The AI Game Master can award XP through the `/experience` endpoint
-- The progression endpoint provides information about current level, XP, and XP needed for next level
-
-### XP Thresholds by Level
-
-| Level | XP Required |
-|-------|-------------|
-| 1     | 0           |
-| 2     | 300         |
-| 3     | 900         |
-| 4     | 2,700       |
-| 5     | 6,500       |
-| 6     | 14,000      |
-| 7     | 23,000      |
-| 8     | 34,000      |
-| 9     | 48,000      |
-| 10    | 64,000      |
-| 11    | 85,000      |
-| 12    | 100,000     |
-| 13    | 120,000     |
-| 14    | 140,000     |
-| 15    | 165,000     |
-| 16    | 195,000     |
-| 17    | 225,000     |
-| 18    | 265,000     |
-| 19    | 305,000     |
-| 20    | 355,000     |
-
-## Building and Running
-
+1. Clone the repository:
 ```bash
-# Build the application
-mvn clean package
-
-# Run the application
-java -jar target/characters-mcp-server-1.0.0-SNAPSHOT.jar
+git clone <repository-url>
+cd backend/game-characters-mcp-server
 ```
 
-## AI Agent Integration
-
-This service is designed to be invoked by an AI Agent via a tool. The AI Agent can use the REST endpoints to:
-1. Create new characters
-2. Retrieve character information
-3. Update character stats, inventory, or status
-4. Delete characters when needed
-5. Award experience points and manage character progression
-
-### Example: Adding Experience Points
-
-```json
-POST /api/characters/{characterId}/experience
-{
-  "experiencePoints": 300
-}
+2. Configure AWS credentials (if not already done):
+```bash
+aws configure
 ```
 
-### Example: Getting Progression Information
-
-```
-GET /api/characters/{characterId}/progression
-```
-
-Response:
-```json
-{
-  "currentLevel": 2,
-  "currentExperience": 450,
-  "experienceForCurrentLevel": 300,
-  "experienceForNextLevel": 900,
-  "experienceNeeded": 450
-}
+3. Build the application:
+```bash
+./mvnw clean install
 ```
 
-## Example Character Creation Request
-
-```json
-POST /api/characters
-{
-  "characterName": "Elyndra",
-  "playerId": "elyndra",
-  "name": "Elyndra",
-  "characterClass": "Wizard",
-  "race": "Elf",
-  "gender": "Female",
-  "level": 1,
-  "experience": 0,
-  "stats": {
-    "strength": 8,
-    "dexterity": 14,
-    "constitution": 12,
-    "intelligence": 16,
-    "wisdom": 13,
-    "charisma": 10
-  },
-  "inventory": [
-    {
-      "itemName": "Spellbook",
-      "quantity": 1
-    },
-    {
-      "itemName": "Dagger",
-      "quantity": 1
-    }
-  ],
-  "currentStatus": {
-    "hp": 8,
-    "maxHp": 8,
-    "condition": "Normal",
-    "buffs": []
-  }
-}
+4. Containerize the application:
+```bash
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=game-characters-mcp-server
 ```
+
+### Quick Start
+
+1. Start the application:
+```bash
+./mvnw spring-boot:run
+```
+
+### Troubleshooting
+
+1. DynamoDB Connection Issues
+- Error: "Unable to connect to DynamoDB"
+- Solution: 
+  ```bash
+  aws sts get-caller-identity  # Verify AWS credentials
+  ```
+- Check region configuration in application.properties
+
+2. Character Updates Not Persisting
+- Enable debug logging in application.properties:
+  ```properties
+  logging.level.com.characters=DEBUG
+  ```
+- Verify DynamoDB table permissions
+
+## Data Flow
+The service handles character data through a structured flow from API to persistence layer.
+
+```ascii
+Client Request → CharacterService → CharacterRepository → DynamoDB
+     ↑                  ↓                    ↑              ↓
+     └──────────Response──────────────Data Object────────Storage
+```
+
+Key component interactions:
+1. CharacterService processes business logic and validates requests
+2. ExperienceService handles level progression calculations
+3. CharacterRepository manages DynamoDB operations
+4. DynamoDB stores character data with partition key on characterId
+5. Spring AI Tool annotations expose functions for AI integration
+
+### Amazon DynamoDB Resources
+- Table: dnd-mcp-game-characters
+  - Partition Key: characterId (String)
+  - Attributes:
+    - name (String)
+    - level (Number)
+    - experience (Number)
+    - inventory (List)
+    - stats (Map)
+    - currentStatus (Map)
+
+### AWS Configuration
+- Region: us-west-2
+- Authentication: DefaultCredentialsProvider
+- Enhanced DynamoDB Client for improved type safety

@@ -24,11 +24,7 @@
     "typeRoots": [
       "./node_modules/@types"
     ],
-    "baseUrl": ".",
-    "paths": {
-      "@npc/*": ["./src/npc/main/java/com/example/*"],
-      "@game-rules/*": ["./src/game-rules/main/java/com/example/*"],
-    }
+    "baseUrl": "."
   },
   "exclude": [
     "node_modules",

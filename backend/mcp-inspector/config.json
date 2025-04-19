@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hello-world": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-everything"],
+      "env": {
+        "hello": "Hello MCP!"
+      }
+    }
+  }
+}

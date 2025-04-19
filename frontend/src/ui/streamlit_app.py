@@ -164,7 +164,9 @@ class GameMasterUI:
             charisma = st.number_input("Charisma", min_value=0, max_value=20, value=10, key="charisma")
 
         # Collect all character specifications
+        character_id = str(uuid.uuid4())
         specs = {
+            'character_id': character_id,
             'character_name': name_input,
             'race': race,
             'class': character_class,
@@ -179,12 +181,12 @@ class GameMasterUI:
 
         # Start adventure button
         if st.button("Start Adventure", disabled=not name_input):
-            character_id = str(uuid.uuid4())
             success = False
             
             # Show saving message
             with st.spinner("Saving your character..."):
-                success = asyncio.run(self._create_character_async(specs))
+                # success = asyncio.run(self._create_character_async(specs))
+                success = self.save_character(character_id, specs)
             
             if success:
                 st.success(f"Character saved successfully! Preparing your adventure...")
@@ -211,14 +213,16 @@ class GameMasterUI:
         Returns:
             dict: Result from the character creation
         """
-        try:
-            client = Client(SSETransport("http://localhost:8081/api/characters/mcp/message"))
-            async with client:
+        async with Client("http://localhost:8081/sse") as client:
+            # Add more detailed error handling
+            try:
                 result = await client.call_tool("createCharacter", character_specs)
+                print(f"Character creation result: {result}")
                 return True
-        except Exception as e:
-            print(f"Error saving character: {str(e)}")
-            return False
+            except Exception as tool_error:
+                print(f"Tool call error: {str(tool_error)}")
+                return False
+
             
     
     def _display_game_page(self):
@@ -235,14 +239,19 @@ class GameMasterUI:
             st.write(f"**Gender:** {st.session_state.current_character['gender']}")
             
             st.divider()
-            
+
             # Display character stats with modifiers
             for stat, value in st.session_state.current_character.items():
-                if stat not in ['character_name', 'race', 'class', 'gender']:
-                    modifier = (value - 10) // 2
-                    modifier_text = f"+{modifier}" if modifier >= 0 else str(modifier)
-                    st.write(f"{stat}: {value} ({modifier_text})")
-            
+                if stat not in ['character_id', 'character_name', 'race', 'class', 'gender']:
+                    try:
+                        stat_value = int(value)
+                        modifier = (stat_value - 10) // 2
+                        modifier_text = f"+{modifier}" if modifier >= 0 else str(modifier)
+                        st.write(f"{stat.title()}: {value} ({modifier_text})")
+                    except ValueError:
+                        st.error(f"Invalid value for {stat}: {value}")
+                        continue
+
             st.button("Save Game", on_click=self.save_game)
 
         # Main game area
