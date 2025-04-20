@@ -17,7 +17,7 @@ const stackProps = {
 };
 const devEnv = process.env.DEV_ENV || "local";
 if (devEnv === "local") {
-    // TO DO: Local development
+    // Local development using LocalStack / Docker
 }
 else {
     new DNDGenAIStack(app, 'DNDGenAIStack', {

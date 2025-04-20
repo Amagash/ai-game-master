@@ -4,8 +4,7 @@ MCP inspector is a developer tool for testing and debugging MCP servers via a Vi
 
 ## Prerequisites
 
-- Node.js:^22.7.5
-- NPM (Node Package Manager)
+- Node.js (v22.x or later)
 
 ## Installation
 
@@ -38,7 +37,7 @@ You can configure additional MCP servers by updating your `config.json` file:
       "command": "npx",
       "args": ["@modelcontextprotocol/server-everything"],
       "env": {
-        "PORT": "3001",
+        "PORT": "3003",
         "DEBUG": "true"
       }
     }

@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { Stack, StackProps, RemovalPolicy, CfnOutput, Tags } from 'aws-cdk-lib';
 /***** END CDK *****/
 
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { bedrock } from '@cdklabs/generative-ai-cdk-constructs';
@@ -30,7 +31,7 @@ export class DNDGenAIStack extends Stack {
             this._supervisorInstruction = config['supervisor_instruction'];
             this._collabWRulesInstruction = config['supervisor_collab_with_rules_instruction'];
             this._collabWNPCInstruction = config['supervisor_collab_with_npc_instruction'];
-            
+
             // Create a specialized Knowledge Base on D&D rules
             const bucketWAssets: s3.Bucket = this.createBucket(`${this._appResourcePrefix}-game-assets`);
             new BucketDeployment(this, 'DNDBucketDeployment', {
@@ -94,7 +95,19 @@ export class DNDGenAIStack extends Stack {
                 aliasName: 'dnd-gm',
             });
 
+            // Create a DynamoDB table to store game characters' specifications
+            const charactersTable = new dynamodb.Table(this, 'DNDCharactersTable', {
+                tableName: `${this._appResourcePrefix}-game-characters`,
+                partitionKey: { name: 'character_id', type: dynamodb.AttributeType.STRING },
+                removalPolicy: RemovalPolicy.DESTROY,
+                billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            });
+
             // Outputs
+            new CfnOutput(this, 'DNDAWSRegion', {
+                value: props?.env?.region || '',
+                exportName: 'DNDAWSRegion',
+            });
             new CfnOutput(this, 'DNDGameMasterAgentId', {
                 value: gameMasterAgent.agentId,
                 exportName: 'DNDGameMasterAgentId',
@@ -102,6 +115,14 @@ export class DNDGenAIStack extends Stack {
             new CfnOutput(this, 'DNDGameMasterAgentAliasId', {
                 value: gameMasterAgentAlias.aliasId || '',
                 exportName: 'DNDGameMasterAgentAliasId',
+            });
+            new CfnOutput(this, 'DNDCharactersTableName', {
+                value: charactersTable.tableName,
+                exportName: 'DNDCharactersTableName',
+            });
+            new CfnOutput(this, 'DNDGameAssetsBucketName', {
+                value: bucketWAssets.bucketName,
+                exportName: 'DNDGameAssetsBucketName',
             });
         }
     }
@@ -129,7 +150,7 @@ export class DNDGenAIStack extends Stack {
             instruction: kbInstruction
         });
         Tags.of(vectorKB).add('mcp-multirag-kb', 'true');
-        
+
         return vectorKB;
     }
 
