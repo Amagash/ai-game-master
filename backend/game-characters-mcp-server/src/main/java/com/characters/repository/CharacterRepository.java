@@ -8,7 +8,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.internal.AttributeValues;
@@ -61,7 +60,7 @@ public class CharacterRepository {
                 .filterExpression(Expression.builder()
                         .expression("playerId = :playerId")
                         .expressionValues(Collections.singletonMap(":playerId", 
-                                software.amazon.awssdk.enhanced.dynamodb.internal.AttributeValues.stringValue(playerId)))
+                                AttributeValues.stringValue(playerId)))
                         .build())
                 .build();
                 

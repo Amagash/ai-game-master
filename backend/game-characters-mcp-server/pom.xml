@@ -73,11 +73,13 @@
             <version>${aws.sdk.version}</version>
         </dependency>
 
+        <!-- LOMBOK & OTHERS -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        
 
         <!-- TEST -->
         <dependency>

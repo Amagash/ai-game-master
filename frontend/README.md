@@ -55,7 +55,10 @@ uv pip install -e .
 
 ### Configuration
 
-1. Create a `.env` file at the project root with the following variables with values from [infrastructure](./../infrastructure/README.md#installation) deployment outputs:
+1. Create a `.env` file at the project root (i.e: frontend folder) with the following variables with values from [infrastructure](./../infrastructure/README.md#installation) deployment outputs:
+```bash
+touch .env
+```
 ```env
 AWS_REGION=your-region
 BEDROCK_AGENT_ID=your-agent-id

@@ -70,7 +70,6 @@ class CharacterService:
                     "character_id": character_id,
                     "character_name": character_name,  # Add this as a key
                     "player_id": character_name.lower().strip(),  # Using character_name as player_id for now
-                    "name": character_name,
                     "class": specs.get('class', ''),
                     "race": specs.get('race', ''),
                     "gender": specs.get('gender', ''),  # Add gender field

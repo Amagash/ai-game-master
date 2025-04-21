@@ -1,11 +1,8 @@
 # Standard library imports
-from datetime import datetime
 import uuid
 import re
 import time
 import random
-import requests
-import json
 import asyncio
 
 # AWS SDK + Retry imports
@@ -32,7 +29,6 @@ st.set_page_config(
 from src.agents.bedrock_agent import BedrockAgent
 from src.services.storage_service import StorageService
 from src.services.image_service import ImageService
-from src.services.character_service import CharacterService
 from src.config.prompts import LAUNCH_PROMPT, SUGGESTION_PROMPT
 
 
@@ -63,8 +59,6 @@ class GameMasterUI:
             st.session_state.storage = StorageService()
         if 'image_service' not in st.session_state:
             st.session_state.image_service = ImageService()
-        if 'character_service' not in st.session_state:
-            st.session_state.character_service = CharacterService()
         if 'name' not in st.session_state:
             st.session_state.name = None
         if 'character_created' not in st.session_state:
@@ -167,7 +161,7 @@ class GameMasterUI:
         character_id = str(uuid.uuid4())
         specs = {
             'character_id': character_id,
-            'character_name': name_input,
+            'name': name_input,
             'race': race,
             'class': character_class,
             'gender': gender,
@@ -185,8 +179,7 @@ class GameMasterUI:
             
             # Show saving message
             with st.spinner("Saving your character..."):
-                # success = asyncio.run(self._create_character_async(specs))
-                success = self.save_character(character_id, specs)
+                success = asyncio.run(self._create_character_async(specs))
             
             if success:
                 st.success(f"Character saved successfully! Preparing your adventure...")
@@ -201,27 +194,53 @@ class GameMasterUI:
                 st.rerun()
             else:
                 st.error("Failed to save character. Please try again.")
-
-
-    async def _create_character_async(self, character_specs):
+    
+    
+    async def _create_character_async(self, character):
         """
         Asynchronously create a character using the MCP client.
         
         Args:
-            character_specs (dict): Character specifications
-            
+            character (dict): Character specifications
+                
         Returns:
-            dict: Result from the character creation
+            bool: True if character creation was successful, False otherwise
         """
         async with Client("http://localhost:8081/sse") as client:
-            # Add more detailed error handling
             try:
-                result = await client.call_tool("createCharacter", character_specs)
-                print(f"Character creation result: {result}")
+                # Restructure the character data to match the Java GameCharacters model
+                character_payload = {
+                    "characterId": character['character_id'],
+                    "playerId": character['name'],  # Using character name as playerId for now
+                    "name": character['name'],
+                    "race": character['race'],
+                    "characterClass": character['class'],
+                    "gender": character['gender'],
+                    "stats": {
+                        "intelligence": character['Intelligence'],
+                        "strength": character['Strength'],
+                        "dexterity": character['Dexterity'],
+                        "constitution": character['Constitution'],
+                        "wisdom": character['Wisdom'],
+                        "charisma": character['Charisma']
+                    }
+                }
+
+                # print(f"Sending character payload: {character_payload}")
+                
+                # Call the createCharacter tool with the properly structured payload
+                result = await client.call_tool(
+                    "createCharacter",
+                    {"character": character_payload}
+                )
+                
+                # print(f"Character creation result: {result}")
                 return True
+                
             except Exception as tool_error:
-                print(f"Tool call error: {str(tool_error)}")
+                print(f"createCharacter Tool call error: {str(tool_error)}")
                 return False
+
 
             
     
@@ -234,7 +253,7 @@ class GameMasterUI:
         """
         # Setup sidebar with character info first
         with st.sidebar:
-            st.title(st.session_state.current_character['character_name'])
+            st.title(st.session_state.current_character['name'])
             st.write(f"**{st.session_state.current_character['race']} {st.session_state.current_character['class']}**")
             st.write(f"**Gender:** {st.session_state.current_character['gender']}")
             
@@ -242,7 +261,7 @@ class GameMasterUI:
 
             # Display character stats with modifiers
             for stat, value in st.session_state.current_character.items():
-                if stat not in ['character_id', 'character_name', 'race', 'class', 'gender']:
+                if stat not in ['character_id', 'name', 'race', 'class', 'gender']:
                     try:
                         stat_value = int(value)
                         modifier = (stat_value - 10) // 2
@@ -311,7 +330,7 @@ class GameMasterUI:
         try:
             character = st.session_state.current_character
             suggestion_prompt = SUGGESTION_PROMPT.format(
-                player_name=character['character_name'],
+                player_name=character['name'],
                 player_race=character['race'],
                 player_class=character['class'],
                 player_gender=character['gender'],
@@ -383,12 +402,13 @@ class GameMasterUI:
                     st.markdown("## Preparing Your Adventure")
                     with st.spinner("The Game Master is preparing your adventure..."):
                         character = st.session_state.current_character
+                        print("****"+str(character))
                         
                         # Set character info in the image service for consistent image generation
                         st.session_state.image_service.set_character_info(character)
                         
                         launch_prompt = LAUNCH_PROMPT.format(
-                            player_name=character['character_name'],
+                            player_name=character['name'],
                             player_race=character['race'],
                             player_class=character['class'],
                             player_gender=character['gender']
@@ -503,19 +523,6 @@ class GameMasterUI:
             st.success(f"Game saved successfully as {result}!")
         else:
             st.error(f"Error saving game: {result}")
-
-    def save_character(self, character_id, specs):
-        """
-        Save character to the database.
-        
-        Args:
-            character_id (str): The unique ID for the character
-            specs (dict): The character specifications
-            
-        Returns:
-            bool: True if save was successful, False otherwise
-        """
-        return st.session_state.character_service.save_character(character_id, specs)
 
     @retry(
             stop=stop_after_attempt(3),

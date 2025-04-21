@@ -20,14 +20,6 @@ public class CurrentStatus {
     private String condition;
     private List<String> buffs;
     
-    public Integer getHp() {
-        return hp;
-    }
-    
-    public void setHp(Integer hp) {
-        this.hp = hp;
-    }
-    
     @DynamoDbAttribute("max_hp")
     public Integer getMaxHp() {
         return maxHp;
