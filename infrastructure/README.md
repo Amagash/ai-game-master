@@ -53,7 +53,7 @@ infrastructure/
   - Amazon Bedrock resources
   - Amazon S3 buckets
   - AWS IAM Roles and Policies
-**- AWS CLI configured with appropriate credentials**(`aws configure`)
+- **AWS CLI configured with appropriate credentials** (`aws configure`)
 
 ### Installation
 

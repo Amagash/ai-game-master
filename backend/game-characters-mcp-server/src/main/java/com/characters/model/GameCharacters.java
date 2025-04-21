@@ -17,7 +17,6 @@ import java.util.List;
 @DynamoDbBean
 public class GameCharacters {
     private String characterId;
-    private String characterName;
     private String playerId;
     private String name;
     private String characterClass;  // "class" is a reserved keyword in Java
@@ -39,15 +38,6 @@ public class GameCharacters {
         this.characterId = characterId;
     }
     
-    @DynamoDbAttribute("character_name")
-    public String getCharacterName() {
-        return characterName;
-    }
-    
-    public void setCharacterName(String characterName) {
-        this.characterName = characterName;
-    }
-    
     @DynamoDbAttribute("player_id")
     public String getPlayerId() {
         return playerId;
@@ -55,6 +45,14 @@ public class GameCharacters {
     
     public void setPlayerId(String playerId) {
         this.playerId = playerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
     
     @DynamoDbAttribute("class")

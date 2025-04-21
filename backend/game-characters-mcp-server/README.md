@@ -51,7 +51,7 @@ backend/game-characters-mcp-server/
 - Java 17 or later
 - Maven 3.9.x (or use included wrapper)
 - An AWS Account
-- **AWS Resources already deployed within your AWS Account** (see [instructions here](./../../infrastructure/README.md)
+- **AWS Resources already deployed within your AWS Account** (see [instructions here](./../../infrastructure/README.md))
 - AWS CLI configured with appropriate credentials
 
 ### Installation
@@ -84,24 +84,17 @@ eval "$(aws configure export-credentials --profile [AWS-PROFILE] --format env)"
 ./mvnw spring-boot:run
 ```
 
-OR
-
-Run it within a container using docker
-```bash
-docker run -p 8081:8081 -t game-characters-mcp-server
-```
-
 ### Amazon DynamoDB Resources
 
-- Table: dnd-mcp-game-characters
-  - Partition Key: characterId (String)
+- Table: dnd-genai-game-characters
+  - Partition Key: character_id (String)
   - Attributes:
     - name (String)
     - level (Number)
     - experience (Number)
     - inventory (List)
     - stats (Map)
-    - currentStatus (Map)
+    - current_status (Map)
 
 ### AWS Configuration
 
