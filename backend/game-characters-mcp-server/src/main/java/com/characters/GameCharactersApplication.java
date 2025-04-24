@@ -19,7 +19,7 @@ public class GameCharactersApplication {
     }
 
     @Bean
-    public List<ToolCallback> danTools(CharacterService gameCharacters) {
+    public List<ToolCallback> characterTools(CharacterService gameCharacters) {
         return List.of(ToolCallbacks.from(gameCharacters));
     }
 }
