@@ -20,6 +20,9 @@ export class DNDGenAIStack extends Stack {
     private _collabWRulesInstruction: string = '';
     private _collabWNPCInstruction: string = '';
 
+    // Export stack outputs
+    public readonly exports = new Map<string, string>();
+
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
         const config: any = this.getConfig();
@@ -108,18 +111,22 @@ export class DNDGenAIStack extends Stack {
                 value: props?.env?.region || '',
                 exportName: 'DNDAWSRegion',
             });
+
             new CfnOutput(this, 'DNDGameMasterAgentId', {
                 value: gameMasterAgent.agentId,
                 exportName: 'DNDGameMasterAgentId',
             });
+
             new CfnOutput(this, 'DNDGameMasterAgentAliasId', {
                 value: gameMasterAgentAlias.aliasId || '',
                 exportName: 'DNDGameMasterAgentAliasId',
             });
+
             new CfnOutput(this, 'DNDCharactersTableName', {
                 value: charactersTable.tableName,
                 exportName: 'DNDCharactersTableName',
             });
+
             new CfnOutput(this, 'DNDGameAssetsBucketName', {
                 value: bucketWAssets.bucketName,
                 exportName: 'DNDGameAssetsBucketName',
