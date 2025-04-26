@@ -107,35 +107,30 @@ export class DNDGenAIStack extends Stack {
             });
 
             // Outputs
-            const regionOutput = new CfnOutput(this, 'DNDAWSRegion', {
+            new CfnOutput(this, 'DNDAWSRegion', {
                 value: props?.env?.region || '',
                 exportName: 'DNDAWSRegion',
             });
-            this.exports.set('DNDAWSRegion', regionOutput.value);
 
-            const gameMasterAgentIdOutput = new CfnOutput(this, 'DNDGameMasterAgentId', {
+            new CfnOutput(this, 'DNDGameMasterAgentId', {
                 value: gameMasterAgent.agentId,
                 exportName: 'DNDGameMasterAgentId',
             });
-            this.exports.set('DNDGameMasterAgentId', gameMasterAgent.agentId);
 
-            const gameMasterAgentAliasIdOutput = new CfnOutput(this, 'DNDGameMasterAgentAliasId', {
+            new CfnOutput(this, 'DNDGameMasterAgentAliasId', {
                 value: gameMasterAgentAlias.aliasId || '',
                 exportName: 'DNDGameMasterAgentAliasId',
             });
-            this.exports.set('DNDGameMasterAgentAliasId', gameMasterAgentAlias.aliasId || '');
 
-            const charactersTableNameOutput = new CfnOutput(this, 'DNDCharactersTableName', {
+            new CfnOutput(this, 'DNDCharactersTableName', {
                 value: charactersTable.tableName,
                 exportName: 'DNDCharactersTableName',
             });
-            this.exports.set('DNDCharactersTableName', charactersTable.tableName);
 
-            const gameAssetsBucketNameOutput = new CfnOutput(this, 'DNDGameAssetsBucketName', {
+            new CfnOutput(this, 'DNDGameAssetsBucketName', {
                 value: bucketWAssets.bucketName,
                 exportName: 'DNDGameAssetsBucketName',
             });
-            this.exports.set('DNDGameAssetsBucketName', bucketWAssets.bucketName);
         }
     }
 
